@@ -26,7 +26,17 @@ flutter build apk --release --target-platform android-arm64   # APK for Android 
 
 Gradle is capped at ~2.5 GB in `android/gradle.properties` so builds fit on a 10 GB laptop. Raise it if you have more RAM.
 
-**iPhone** needs a Mac with Xcode: `cd ios && pod install && cd .. && flutter run` (set your Apple team under Runner → Signing & Capabilities the first time).
+**Demo on an iPhone without a Mac:** serve the web build on your Wi-Fi and open it in Safari.
+
+```bash
+flutter build web --release --no-web-resources-cdn
+cd build/web && python3 -m http.server 8080 --bind 0.0.0.0
+# on the phone (same Wi-Fi): http://<laptop-ip>:8080 → Share → Add to Home Screen
+```
+
+Everything works there except real GPS (Safari only allows it over HTTPS), so free runs use simulated GPS.
+
+**iPhone app** needs a Mac with Xcode: `cd ios && pod install && cd .. && flutter run` (set your Apple team under Runner → Signing & Capabilities the first time).
 Everything iOS needs is already configured: location "Always" + background location, camera, photos, notifications, iOS 15.5 (required by ML Kit).
 
 ---
