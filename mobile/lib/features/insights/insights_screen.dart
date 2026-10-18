@@ -39,7 +39,7 @@ class InsightsScreen extends StatelessWidget {
               handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
               sliver: SliverAppBar(
                 pinned: true,
-                expandedHeight: 200,
+                expandedHeight: 218,
                 forceElevated: inner,
                 backgroundColor: RL.navy,
                 foregroundColor: Colors.white,

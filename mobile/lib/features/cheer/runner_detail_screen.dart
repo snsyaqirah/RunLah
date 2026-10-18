@@ -706,7 +706,7 @@ class _CheerComposerState extends State<_CheerComposer> with SingleTickerProvide
                 animation: _sent,
                 builder: (_, _) {
                   final v = _sent.value;
-                  if (v == 0 || v == 1) return const SizedBox.shrink();
+                  if (!_sent.isAnimating) return const SizedBox.shrink();
                   final opacity = v < 0.15 ? v / 0.15 : (v > 0.75 ? (1 - v) / 0.25 : 1.0);
                   return Transform.translate(
                     offset: Offset(0, -24 * Curves.easeOut.transform(v)),

@@ -220,7 +220,11 @@ class _CorralCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Pill(tr('Waiting in corral'), color: RL.amber, filled: true, icon: Icons.hourglass_top_rounded),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Pill(tr('Waiting in corral'), color: RL.amber, filled: true, icon: Icons.hourglass_top_rounded),
+                    ),
                     const SizedBox(height: 8),
                     Text(
                       tr('Gun at {time}', {'time': fmtClock(sim.race.scheduledStart)}),

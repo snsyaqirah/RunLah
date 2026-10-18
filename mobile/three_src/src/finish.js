@@ -201,7 +201,8 @@ export class FinishArea {
       }
     }
     this.fans = new InstancedMesh(figGeo, figureMaterial(), fans.length);
-    const shirt = ['#e85d75', '#f2c14e', '#5fb3f9', '#9b7bf2', '#f08a4b', '#4cc9a0', '#e8e8e8', '#ff7aa2', '#7ad3ff'].map((h) => new Color(h));
+    // Muted shirts so the runners' legend colours stand out.
+    const shirt = ['#8a4a5a', '#7d6a48', '#4f5f7a', '#6a5a86', '#7a5a48', '#4d6a64', '#9a9aa4', '#874a6a', '#5a6a7a'].map((h) => new Color(h));
     this.fanData = fans;
     fans.forEach(([x, z, yaw, r], i) => {
       q.setFromAxisAngle(up, yaw);

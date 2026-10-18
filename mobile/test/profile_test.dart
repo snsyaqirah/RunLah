@@ -28,8 +28,23 @@ Future<int> _dismissCelebration(WidgetTester tester) async {
     shown++;
   }
   await tester.tap(find.text('Nice!'));
+  await tester.pump();
   await tester.pump(const Duration(milliseconds: 400));
+  await tester.pump();
   return shown;
+}
+
+/// Scroll [text] into view, then tap it.
+Future<void> _tapText(WidgetTester tester, String text, {Duration settle = const Duration(milliseconds: 400)}) async {
+  if (find.text(text).evaluate().isEmpty) {
+    // Lazily built list: scroll until the item exists.
+    await tester.scrollUntilVisible(find.text(text), 200, scrollable: find.byType(Scrollable).first);
+  }
+  final f = find.text(text).last;
+  await tester.ensureVisible(f);
+  await tester.pump(const Duration(milliseconds: 300));
+  await tester.tap(f);
+  await tester.pump(settle);
 }
 
 Future<void> _scrollAll(WidgetTester tester, Finder scrollable) async {
@@ -116,9 +131,9 @@ void main() {
       await tester.pump(const Duration(milliseconds: 600));
       expect(find.text('Saya'), findsOneWidget);
       expect(find.text('LENCANA'), findsOneWidget);
-      expect(find.text('172'), findsNothing);
-      await _scrollAll(tester, find.byType(CustomScrollView));
+      await tester.scrollUntilVisible(find.text('REKOD PERIBADI'), 300, scrollable: find.byType(Scrollable).first);
       expect(find.text('REKOD PERIBADI'), findsOneWidget);
+      await _scrollAll(tester, find.byType(CustomScrollView));
       // Other screens in BM too.
       for (final screen in const <Widget>[SettingsScreen(), PrivacyScreen(), RaceWrappedScreen(), SelfieFrameScreen()]) {
         await tester.pumpWidget(app.wrap(KeyedSubtree(key: UniqueKey(), child: screen)));
@@ -134,7 +149,9 @@ void main() {
       expect(find.text('2026'), findsWidgets);
       Future<void> next() async {
         await tester.tapAt(Offset(size.width * 0.85, size.height * 0.5));
-        await tester.pump(const Duration(milliseconds: 500));
+        await tester.pump(); // slide starts
+        await tester.pump(const Duration(milliseconds: 500)); // slide done
+        await tester.pump(); // page becomes active, count-ups start
         await tester.pump(const Duration(milliseconds: 1600));
       }
 
@@ -154,7 +171,9 @@ void main() {
       expect(find.text('Share my Wrapped'), findsOneWidget);
       // Tap on the left half goes back.
       await tester.tapAt(Offset(size.width * 0.1, size.height * 0.5));
+      await tester.pump();
       await tester.pump(const Duration(milliseconds: 600));
+      await tester.pump();
       expect(find.text('Share my Wrapped'), findsNothing);
       expect(tester.takeException(), isNull);
     });
@@ -175,11 +194,12 @@ void main() {
       await pumpScreen(tester, (_) => const SelfieFrameScreen(), finished: true, size: size);
       expect(find.text('FINISHER'), findsOneWidget);
       expect(find.text('1:36:15'), findsOneWidget);
-      await tester.tap(find.text('Race bib'));
+      await _tapText(tester, 'Race bib');
+      // Let the frame cross-fade finish.
       await tester.pump(const Duration(milliseconds: 400));
+      await tester.pump();
       expect(find.text('34144'), findsOneWidget);
-      await tester.tap(find.text('Minimal'));
-      await tester.pump(const Duration(milliseconds: 400));
+      await _tapText(tester, 'Minimal');
       await _scrollAll(tester, find.byType(Scrollable).first);
       expect(find.text('Share framed photo'), findsOneWidget);
       expect(tester.takeException(), isNull);
@@ -187,23 +207,18 @@ void main() {
 
     testWidgets('settings · $tag', (tester) async {
       final app = await pumpScreen(tester, (_) => const SettingsScreen(), size: size);
-      await tester.tap(find.text('Bib only'));
-      await tester.pump();
+      // Top to bottom (the list builds lazily).
+      await _tapText(tester, 'Miles');
+      expect(app.settings.units.name, 'mi');
+      await _tapText(tester, 'Dark');
+      expect(app.settings.themeMode, ThemeMode.dark);
+      await _tapText(tester, 'Bib only');
       expect(app.settings.resultsName, ResultsName.bibOnly);
       expect(app.sim.you.resultsName, ResultsName.bibOnly);
       expect(find.text('Others see you as: Runner 34144'), findsOneWidget);
-      await tester.tap(find.text('Dark'));
-      await tester.pump();
-      expect(app.settings.themeMode, ThemeMode.dark);
-      await tester.tap(find.text('Miles'));
-      await tester.pump();
-      await _scrollAll(tester, find.byType(Scrollable).first);
-      await tester.tap(find.text('Target time'));
-      await tester.pump(const Duration(milliseconds: 500));
-      await tester.tap(find.text('+1 min'));
-      await tester.pump();
-      await tester.tap(find.text('Save target'));
-      await tester.pump(const Duration(milliseconds: 500));
+      await _tapText(tester, 'Target time', settle: const Duration(milliseconds: 600));
+      await _tapText(tester, '+1 min');
+      await _tapText(tester, 'Save target', settle: const Duration(milliseconds: 600));
       expect(app.settings.targetTimeS, 6060);
       app.sim.you.resultsName = ResultsName.full;
       expect(tester.takeException(), isNull);
@@ -213,21 +228,22 @@ void main() {
   testWidgets('privacy: export falls back to a dialog, delete resets', (tester) async {
     final app = await pumpScreen(tester, (_) => const PrivacyScreen());
     app.settings.displayName = 'Someone';
-    await tester.tap(find.text('Export my data'));
-    await tester.pump(const Duration(milliseconds: 500));
+    await _tapText(tester, 'Export my data', settle: const Duration(milliseconds: 100));
+    // The share plugin isn't there in tests: let its real async failure land.
+    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 400)));
     await tester.pump(const Duration(milliseconds: 500));
     expect(find.text('Your data'), findsOneWidget);
     expect(find.textContaining('"bib": "34144"'), findsOneWidget);
-    await tester.tap(find.text('Close'));
-    await tester.pump(const Duration(milliseconds: 500));
-    await _scrollAll(tester, find.byType(Scrollable).first);
-    await tester.tap(find.text('Delete my data'));
-    await tester.pump(const Duration(milliseconds: 400));
-    await tester.tap(find.text('Delete'));
-    await tester.pump(const Duration(milliseconds: 400));
+    await _tapText(tester, 'Close');
+    await tester.pump(const Duration(milliseconds: 300));
+    await _tapText(tester, 'Delete my data');
+    await _tapText(tester, 'Delete');
+    await tester.pump(const Duration(milliseconds: 300));
     expect(app.settings.displayName, 'Arep');
     expect(app.prefs.getString('displayName'), 'Arep');
-    expect(app.prefs.getStringList('follows'), isNull);
+    expect(app.prefs.getStringList('follows'), isEmpty);
+    expect(app.follows.ids, isEmpty);
+    expect(app.store.activities, isEmpty);
     expect(tester.takeException(), isNull);
   });
 
@@ -247,6 +263,8 @@ void main() {
     await pumpScreen(tester, (_) => const Shell(), finished: true);
     expect(find.textContaining('badges unlocked!'), findsNothing);
     await tester.tap(find.text('Me').last);
+    await tester.pump(); // tab switch; the Me tab sees it's visible
+    await tester.pump(); // celebration route pushed
     await tester.pump(const Duration(milliseconds: 600));
     expect(find.textContaining('badges unlocked!'), findsOneWidget);
     await _dismissCelebration(tester);

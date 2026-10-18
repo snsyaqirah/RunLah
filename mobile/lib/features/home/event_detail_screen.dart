@@ -38,7 +38,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         final ctx = _joinKey.currentContext;
         if (ctx != null && mounted) {
-          Scrollable.ensureVisible(ctx, duration: const Duration(milliseconds: 500), curve: Curves.easeOutCubic, alignment: 0.08);
+          Scrollable.ensureVisible(ctx, duration: const Duration(milliseconds: 500), curve: Curves.easeOutCubic, alignment: 0.25);
         }
       });
     }

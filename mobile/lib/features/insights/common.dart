@@ -260,7 +260,7 @@ class HeroCard extends StatelessWidget {
           colors: [Color(0xFF0E1830), RL.navy, Color(0xFF2A3D66)],
           stops: [0, 0.55, 1],
         ),
-        boxShadow: [BoxShadow(color: RL.navy.withValues(alpha: 0.28), blurRadius: 22, offset: const Offset(0, 10))],
+        boxShadow: [BoxShadow(color: RL.navy.withValues(alpha: 0.16), blurRadius: 18, offset: const Offset(0, 6))],
       ),
       clipBehavior: Clip.antiAlias,
       child: Material(

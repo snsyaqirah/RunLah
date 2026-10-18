@@ -2,6 +2,20 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- runlah://follow/<bib> (QR on the bib card) opens the app. -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.runlah.runlah</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>runlah</string>
+			</array>
+		</dict>
+	</array>
+	<key>FlutterDeepLinkingEnabled</key>
+	<false/>
 	<!-- Live tracking: GPS while running with the screen off (PRD 12.1). -->
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>RunLah uses your location to track your run and show you live on the course map to the people cheering you.</string>

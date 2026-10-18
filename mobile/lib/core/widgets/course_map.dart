@@ -34,7 +34,7 @@ class MapDot {
 /// The course map used everywhere: event preview, live run, cheer map,
 /// "Where were you", organizer console. Light/dark CARTO tiles over
 /// OpenStreetMap, the route in green, checkpoints and landmarks on top.
-class CourseMap extends StatelessWidget {
+class CourseMap extends StatefulWidget {
   const CourseMap({
     super.key,
     required this.race,
@@ -69,7 +69,20 @@ class CourseMap extends StatelessWidget {
   static const routeGreen = Color(0xFF3BA55C);
 
   @override
+  State<CourseMap> createState() => _CourseMapState();
+}
+
+class _CourseMapState extends State<CourseMap> {
+  // One tile provider (and HTTP client) per map, not per rebuild.
+  // TileLayer disposes it when the map goes away.
+  final _tiles = NetworkTileProvider();
+
+  @override
   Widget build(BuildContext context) {
+    final w = widget;
+    final race = w.race, dots = w.dots, extraPolylines = w.extraPolylines, extraLayers = w.extraLayers;
+    final showCheckpoints = w.showCheckpoints, showLandmarks = w.showLandmarks, doneUpTo = w.doneUpTo;
+    final controller = w.controller, interactive = w.interactive, padding = w.padding, onTap = w.onTap;
     final dark = Theme.of(context).brightness == Brightness.dark;
     final route = race.route;
     final b = route.bounds;
@@ -86,7 +99,7 @@ class CourseMap extends StatelessWidget {
           interactionOptions: InteractionOptions(
             flags: interactive ? InteractiveFlag.all & ~InteractiveFlag.rotate : InteractiveFlag.none,
           ),
-          onTap: onTap == null ? null : (_, p) => onTap!(p),
+          onTap: onTap == null ? null : (_, p) => onTap(p),
         ),
         children: [
           TileLayer(
@@ -95,6 +108,7 @@ class CourseMap extends StatelessWidget {
                 : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
             subdomains: const ['a', 'b', 'c', 'd'],
             userAgentPackageName: 'com.runlah.runlah',
+            tileProvider: _tiles,
             retinaMode: RetinaMode.isHighDensity(context),
           ),
           PolylineLayer(
@@ -102,12 +116,12 @@ class CourseMap extends StatelessWidget {
               Polyline(
                 points: route.points,
                 strokeWidth: 6,
-                color: routeGreen.withValues(alpha: doneUpTo == null ? 0.9 : 0.45),
+                color: CourseMap.routeGreen.withValues(alpha: doneUpTo == null ? 0.9 : 0.45),
                 borderColor: Colors.white.withValues(alpha: dark ? 0.15 : 0.8),
                 borderStrokeWidth: 2,
               ),
-              if (doneUpTo != null && doneUpTo! > 0)
-                Polyline(points: route.slice(0, doneUpTo!), strokeWidth: 6, color: RL.amber),
+              if (doneUpTo != null && doneUpTo > 0)
+                Polyline(points: route.slice(0, doneUpTo), strokeWidth: 6, color: RL.amber),
               ...extraPolylines,
             ],
           ),

@@ -67,8 +67,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     s.resultsName = v;
     final sim = context.read<RaceSim>();
     sim.you.resultsName = v;
-    // Nudge listeners (results lists, maps) so the new name shows at once.
-    sim.setSpeed(sim.speed);
+    sim.notifyResultsChanged();
   }
 
   @override

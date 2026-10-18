@@ -22,6 +22,7 @@ class DemoDirectorButton extends StatelessWidget {
       bottom: 12,
       child: SafeArea(
         child: Material(
+          key: const ValueKey('demo-director-pill'),
           color: RL.navy,
           elevation: 6,
           shadowColor: Colors.black45,
@@ -225,7 +226,9 @@ class _DirectorSheet extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             TextButton.icon(
-              onPressed: sim.reset,
+              onPressed: () => sim
+                ..reset()
+                ..startCountdown(),
               icon: const Icon(Icons.restart_alt_rounded),
               label: Text(tr('Reset demo')),
             ),

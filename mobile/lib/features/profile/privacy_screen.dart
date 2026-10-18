@@ -173,7 +173,9 @@ class PrivacyScreen extends StatelessWidget {
       ),
     );
     if (yes != true || !context.mounted) return;
+    final follows = context.read<FollowsController>();
     await context.read<Achievements>().deleteAllData(context.read<SettingsController>());
+    follows.clearAll();
     if (context.mounted) showProfileSnack(context, tr('Your data was deleted from this device.'));
   }
 }

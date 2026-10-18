@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:runlah/core/l10n/bm_cheer.dart';
 import 'package:runlah/core/l10n/i18n.dart';
+import 'package:runlah/data/demo/kl_course.dart';
 import 'package:runlah/data/models.dart';
 import 'package:runlah/features/cheer/add_runner_sheet.dart';
 import 'package:runlah/features/cheer/cheer_live.dart';
@@ -38,6 +39,15 @@ Future<void> _scrollThrough(WidgetTester tester, {int steps = 8}) async {
   }
 }
 
+/// Drag the first scrollable until [finder] matches something (several
+/// matches are fine, unlike scrollUntilVisible).
+Future<void> _scrollUntilFound(WidgetTester tester, Finder finder) async {
+  for (var i = 0; i < 12 && finder.evaluate().isEmpty; i++) {
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -250), warnIfMissed: false);
+    await tester.pump(const Duration(milliseconds: 200));
+  }
+}
+
 void main() {
   group('parseFollowCode', () {
     test('accepts deep links, web links and plain bibs', () {
@@ -49,6 +59,16 @@ void main() {
       expect(parseFollowCode('hello'), isNull);
       expect(parseFollowCode(''), isNull);
     });
+  });
+
+  test('suggested cheer spots cover checkpoints and KL landmarks', () {
+    final race = buildDemoEvent(raceDay: DateTime(2026, 10, 4)).races.first;
+    final spots = CheerSpot.suggested(race);
+    final names = spots.map((s) => s.name).toList();
+    expect(names, containsAll(['KLCC', 'Bukit Bintang', 'Brickfields', 'Dataran Merdeka']));
+    for (var i = 1; i < spots.length; i++) {
+      expect(spots[i].distanceM, greaterThanOrEqualTo(spots[i - 1].distanceM));
+    }
   });
 
   test('BM translations keep their placeholders', () {
@@ -75,12 +95,14 @@ void main() {
     testWidgets('Cheer tab live @$w', (tester) async {
       final app = await pumpScreen(tester, (_) => const CheerScreen(), size: size);
       await _goLive(tester, app);
-      expect(find.text('RUNNING'), findsWidgets);
       // Overtake counter and leaders strip are filled by the 1 Hz engine.
       final live = CheerLive.of(app.sim);
       expect(live.counts(app.sim.youId).lastCp, greaterThan(0));
       expect(live.leaderMen, isNotNull);
       expect(find.text('Leaders on course'), findsOneWidget);
+      // The cards sit below the status card and map on small phones.
+      await _scrollUntilFound(tester, find.text('RUNNING'));
+      expect(find.text('RUNNING'), findsWidgets);
       await _scrollThrough(tester);
     });
 
@@ -129,8 +151,13 @@ void main() {
       expect(find.text('OFFICIAL'), findsOneWidget);
       await tester.tap(find.text('Women'));
       await tester.pump(const Duration(milliseconds: 500));
+      // The chip row scrolls sideways on narrow phones.
+      await tester.ensureVisible(find.textContaining('My category'));
+      await tester.pump(const Duration(milliseconds: 100));
       await tester.tap(find.textContaining('My category'));
       await tester.pump(const Duration(milliseconds: 500));
+      final chip = tester.widget<ChoiceChip>(find.ancestor(of: find.textContaining('My category'), matching: find.byType(ChoiceChip)));
+      expect(chip.selected, isTrue);
       await _scrollThrough(tester, steps: 12);
     });
 
@@ -143,6 +170,7 @@ void main() {
       await _goLive(tester, app, at: 3600);
       final cheersBefore = app.sim.cheersFor(qirah).length;
       await tester.scrollUntilVisible(find.text('Jangan give up!'), 300, scrollable: find.byType(Scrollable).first);
+      await tester.pump(const Duration(milliseconds: 100));
       await tester.tap(find.text('Jangan give up!'));
       await tester.pump(const Duration(milliseconds: 300));
       expect(app.sim.cheersFor(qirah).length, cheersBefore + 1);

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:runlah/data/activity_store.dart';
 import 'package:runlah/features/run/activity_detail_screen.dart';
+import 'package:runlah/features/run/finish_celebration.dart';
 import 'package:runlah/features/run/run_screen.dart';
 import 'package:runlah/services/points_sink.dart';
 import 'package:runlah/services/tracking_service.dart';
@@ -15,6 +16,14 @@ Future<void> scrollThrough(WidgetTester tester, {int steps = 12}) async {
   for (var i = 0; i < steps; i++) {
     await tester.drag(list, const Offset(0, -500));
     await tester.pump(const Duration(milliseconds: 300));
+  }
+}
+
+Future<void> scrollToTop(WidgetTester tester) async {
+  await tester.drag(find.byType(Scrollable).first, const Offset(0, 8000));
+  // Let the fling finish; a tap on a moving list only stops the scroll.
+  for (var i = 0; i < 12; i++) {
+    await tester.pump(const Duration(milliseconds: 250));
   }
 }
 
@@ -34,6 +43,8 @@ void main() {
       await pumpScreen(tester, (_) => const RunScreen(), size: size);
       await settle(tester);
       expect(find.text('34144'), findsOneWidget);
+      // Plugin calls never answer in widget tests; the checks time out.
+      await settle(tester, seconds: 6);
       expect(find.text('WAITING IN CORRAL'), findsOneWidget);
       expect(find.text('PRE-RACE CHECK'), findsOneWidget);
       // Plugins are missing in tests: the check degrades to demo mode.
@@ -65,7 +76,7 @@ void main() {
       expect(find.text('1:36:15'), findsWidgets);
       expect(find.text('See Race Insights'), findsOneWidget);
       // No confetti overlay when you open the app after finishing.
-      expect(find.text('FINISHER'), findsNothing);
+      expect(find.byType(FinishCelebration), findsNothing);
       await scrollThrough(tester);
       expect(find.text('Replay your race in 3D'), findsOneWidget);
     });
@@ -79,8 +90,9 @@ void main() {
       expect(app.store.activities.length, 2);
 
       await tester.tap(find.text('START'));
-      // No GPS plugin in tests: falls back to simulated GPS.
-      await settle(tester, seconds: 2);
+      // No GPS plugin in tests: the status check times out and the run
+      // falls back to simulated GPS.
+      await settle(tester, seconds: 5);
       final t = app.tracking;
       expect(t.state, TrackingState.running);
       expect(t.simulated, isTrue);
@@ -100,9 +112,12 @@ void main() {
       expect(find.textContaining('will upload when online'), findsOneWidget);
       expect(find.text('LIVE SHARE LINK'), findsOneWidget);
 
+      final backlog = t.queued.value;
+      expect(backlog, greaterThan(50));
       t.simulateOffline = false;
       await settle(tester, seconds: 2);
-      expect(t.queued.value, lessThan(10));
+      // The backlog went up in one batch; only fresh points are waiting.
+      expect(t.queued.value, lessThan(backlog ~/ 2));
 
       t.pause();
       await settle(tester, seconds: 1);
@@ -124,11 +139,12 @@ void main() {
     await settle(tester);
     app.sim.jumpTo(finish + 2);
     await settle(tester, seconds: 3);
-    expect(find.text('FINISHER'), findsOneWidget);
+    expect(find.byType(FinishCelebration), findsOneWidget);
+    expect(find.text('You did it, Arep!'), findsOneWidget);
     await settle(tester, seconds: 3);
     await tester.tap(find.text('Close'));
     await settle(tester);
-    expect(find.text('FINISHER'), findsNothing);
+    expect(find.byType(FinishCelebration), findsNothing);
     expect(find.text('See Race Insights'), findsOneWidget);
   });
 
@@ -141,6 +157,29 @@ void main() {
     await settle(tester);
     await scrollThrough(tester);
     expect(find.text('Need help?'), findsOneWidget);
+  });
+
+  testWidgets('Bahasa Malaysia at 360 px: pre-race, free run and live', (tester) async {
+    final app = await pumpScreen(tester, (_) => const RunScreen(), size: const Size(360, 740));
+    app.settings.lang = 'ms';
+    await tester.pumpWidget(app.wrap(KeyedSubtree(key: UniqueKey(), child: const RunScreen())));
+    await settle(tester, seconds: 6);
+    expect(find.text('Hari perlumbaan'), findsOneWidget);
+    await scrollThrough(tester);
+    await scrollToTop(tester);
+    await tester.tap(find.text('Larian bebas'));
+    await settle(tester, seconds: 1);
+    expect(find.text('MULA'), findsOneWidget);
+    await scrollThrough(tester, steps: 4);
+    await scrollToTop(tester);
+    await tester.tap(find.text('Hari perlumbaan'));
+    app.sim.fireGun();
+    app.sim.jumpTo(3000);
+    app.sim.pause();
+    await settle(tester);
+    expect(find.text('Masa bersih'), findsOneWidget);
+    await scrollThrough(tester);
+    app.settings.lang = 'en';
   });
 
   testWidgets('saved run detail screen renders map, chart and splits', (tester) async {

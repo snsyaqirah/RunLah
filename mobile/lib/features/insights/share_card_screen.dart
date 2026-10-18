@@ -35,6 +35,7 @@ class ShareCardData {
     required this.link,
     required this.route,
     required this.units,
+    this.paceText,
     this.timeS,
     this.place,
     this.of,
@@ -48,6 +49,7 @@ class ShareCardData {
   final bool official;
   final RoutePath route;
   final Units units;
+  final String? paceText;
   final double? timeS;
   final int? place, of;
   final double? topPct;
@@ -98,6 +100,7 @@ class ShareCardData {
       link: deepLink(p),
       route: s.race.route,
       units: units,
+      paceText: r == null ? null : fmtPace(r.avgPaceSPerKm, units),
       timeS: r?.netS,
       place: r?.overall?.place,
       of: r?.overall?.of,
@@ -154,7 +157,7 @@ class _ShareCardScreenState extends State<ShareCardScreen> {
     final units = context.watch<SettingsController>().units;
     final data = ShareCardData.build(context, s, sim, widget.participantId, units);
     final keys = data.highlights.keys.toList();
-    final hl = keys.contains(_highlight) ? _highlight : (keys.isEmpty ? null : keys.first);
+    final hl = keys.contains(_highlight) ? _highlight : (keys.contains(CardHighlight.passed) ? CardHighlight.passed : (keys.isEmpty ? null : keys.first));
     final size = ShareCard.sizeOf(_format);
     final previewH = _format == CardFormat.story ? 470.0 : 330.0;
     return Scaffold(
@@ -322,9 +325,9 @@ class CardPalette {
             sub: Colors.white70,
             accent: RL.amber,
             panel: Colors.white.withValues(alpha: 0.08),
-            hlBg: RL.amber.withValues(alpha: 0.16),
-            hlValue: RL.amber,
-            hlLabel: Colors.white70,
+            hlBg: RL.amber,
+            hlValue: RL.navy,
+            hlLabel: RL.navy.withValues(alpha: 0.78),
             route: RL.amber.withValues(alpha: 0.75),
           ),
         CardStyle.sunrise => CardPalette(
@@ -369,8 +372,8 @@ class ShareCard extends StatelessWidget {
     final pal = CardPalette.of(style);
     final size = sizeOf(format);
     return MediaQuery.withNoTextScaling(
-      child: DefaultTextStyle(
-        style: TextStyle(color: pal.fg, fontFamily: DefaultTextStyle.of(context).style.fontFamily, decoration: TextDecoration.none),
+      child: DefaultTextStyle.merge(
+        style: TextStyle(color: pal.fg, decoration: TextDecoration.none),
         child: Container(
           width: size.width,
           height: size.height,
@@ -472,8 +475,16 @@ class ShareCard extends StatelessWidget {
               Row(
                 children: [
                   _logo(pal),
-                  const Spacer(),
-                  Text(tr('Race Insights').toUpperCase(), style: TextStyle(fontSize: 9.5, letterSpacing: 1.8, fontWeight: FontWeight.w800, color: pal.sub)),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(tr('Race Insights').toUpperCase(), style: TextStyle(fontSize: 9.5, letterSpacing: 1.8, fontWeight: FontWeight.w800, color: pal.sub)),
+                      ),
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 18),
@@ -505,7 +516,11 @@ class ShareCard extends StatelessWidget {
                   children: [
                     Expanded(child: _statBox(pal, ordinal(data.place!), tr('of {n} finishers', {'n': fmtInt(data.of!)}))),
                     const SizedBox(width: 10),
-                    Expanded(child: _statBox(pal, data.place == 1 ? tr('Winner') : tr('Top {pct}', {'pct': fmtPct(data.topPct!)}), tr('overall'))),
+                    Expanded(
+                      child: highlight == CardHighlight.top
+                          ? _statBox(pal, data.paceText ?? '–', tr('avg pace'))
+                          : _statBox(pal, data.place == 1 ? tr('Winner') : tr('Top {pct}', {'pct': fmtPct(data.topPct!)}), tr('overall')),
+                    ),
                   ],
                 ),
               ],

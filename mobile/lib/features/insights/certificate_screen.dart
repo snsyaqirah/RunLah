@@ -32,12 +32,7 @@ class _CertificateScreenState extends State<CertificateScreen> {
     try {
       final bytes = await capturePng(_boundary, pixelRatio: 1080 / Certificate.size.width);
       if (bytes == null) throw StateError('no image');
-      final ok = await sharePng(
-        bytes,
-        fileName: 'runlah-certificate-$bib.png',
-        text: tr('{name}\'s finisher e-certificate from {event}', {'name': name, 'event': event}),
-        origin: origin,
-      );
+      final ok = await sharePng(bytes, fileName: 'runlah-certificate-$bib.png', text: tr('{name}\'s finisher e-certificate from {event}', {'name': name, 'event': event}), origin: origin);
       if (!ok && mounted) showSnack(context, tr('Sharing isn\'t available on this device. Try again on your phone.'));
     } catch (_) {
       if (mounted) showSnack(context, tr('Couldn\'t create the image. Please try again.'));
@@ -61,15 +56,13 @@ class _CertificateScreenState extends State<CertificateScreen> {
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
         children: [
           if (!finished || !s.official)
-            StateCard(
-              icon: Icons.lock_clock_rounded,
-              title: tr('Not available yet'),
-              message: tr('E-certificates are issued to finishers once the organizer publishes official results.'),
-            )
+            StateCard(icon: Icons.lock_clock_rounded, title: tr('Not available yet'), message: tr('E-certificates are issued to finishers once the organizer publishes official results.'))
           else ...[
             Center(
               child: DecoratedBox(
-                decoration: BoxDecoration(boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.22), blurRadius: 24, offset: const Offset(0, 10))]),
+                decoration: BoxDecoration(
+                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.22), blurRadius: 24, offset: const Offset(0, 10))],
+                ),
                 child: FittedBox(
                   child: RepaintBoundary(
                     key: _boundary,
@@ -94,9 +87,7 @@ class _CertificateScreenState extends State<CertificateScreen> {
             Builder(
               builder: (bc) => FilledButton.icon(
                 onPressed: _busy ? null : () => _share(bc, name, p.bib, sim.event.name),
-                icon: _busy
-                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2.4, color: Colors.white))
-                    : const Icon(Icons.ios_share_rounded),
+                icon: _busy ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2.4, color: Colors.white)) : const Icon(Icons.ios_share_rounded),
                 label: Text(tr('Share as image')),
               ),
             ),
@@ -106,10 +97,7 @@ class _CertificateScreenState extends State<CertificateScreen> {
                 Icon(Icons.verified_user_rounded, size: 16, color: muted(context)),
                 const SizedBox(width: 6),
                 Expanded(
-                  child: Text(
-                    tr('Anyone can verify this certificate with code {code} at runlah.app/verify.', {'code': p.verifyCode}),
-                    style: TextStyle(fontSize: 12.5, color: muted(context)),
-                  ),
+                  child: Text(tr('Anyone can verify this certificate with code {code} at runlah.app/verify.', {'code': p.verifyCode}), style: TextStyle(fontSize: 12.5, color: muted(context))),
                 ),
               ],
             ),
@@ -145,19 +133,27 @@ class Certificate extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Widget stat(String label, String value) => Expanded(
-          child: Column(
-            children: [
-              Text(label.toUpperCase(), maxLines: 1, style: const TextStyle(fontSize: 7.5, letterSpacing: 1.4, fontWeight: FontWeight.w800, color: RL.slate)),
-              const SizedBox(height: 3),
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(value, maxLines: 1, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: RL.navy, fontFeatures: tabular)),
-              ),
-            ],
+      child: Column(
+        children: [
+          Text(
+            label.toUpperCase(),
+            maxLines: 1,
+            style: const TextStyle(fontSize: 7.5, letterSpacing: 1.4, fontWeight: FontWeight.w800, color: RL.slate),
           ),
-        );
+          const SizedBox(height: 3),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              value,
+              maxLines: 1,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: RL.navy, fontFeatures: tabular),
+            ),
+          ),
+        ],
+      ),
+    );
     return MediaQuery.withNoTextScaling(
-      child: DefaultTextStyle(
+      child: DefaultTextStyle.merge(
         style: const TextStyle(color: RL.navy, decoration: TextDecoration.none),
         textAlign: TextAlign.center,
         child: Container(
@@ -172,60 +168,109 @@ class Certificate extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(34, 34, 34, 28),
               child: Column(
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: 16,
-                        height: 16,
-                        decoration: BoxDecoration(color: RL.amber, borderRadius: BorderRadius.circular(5)),
-                        child: const Icon(Icons.directions_run_rounded, size: 11, color: Colors.white),
+                  Expanded(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.topCenter,
+                      child: SizedBox(
+                        width: size.width - 68,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Container(
+                                  width: 16,
+                                  height: 16,
+                                  decoration: BoxDecoration(color: RL.amber, borderRadius: BorderRadius.circular(5)),
+                                  child: const Icon(Icons.directions_run_rounded, size: 11, color: Colors.white),
+                                ),
+                                const SizedBox(width: 5),
+                                const Text(
+                                  'RunLah',
+                                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: RL.navy),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              event.toUpperCase(),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 8, letterSpacing: 1.6, fontWeight: FontWeight.w700, color: RL.slate),
+                            ),
+                            const SizedBox(height: 16),
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                tr('Certificate').toUpperCase(),
+                                style: const TextStyle(fontSize: 28, letterSpacing: 7, fontWeight: FontWeight.w900, color: RL.navy),
+                              ),
+                            ),
+                            Text(
+                              tr('of achievement').toUpperCase(),
+                              style: const TextStyle(fontSize: 9.5, letterSpacing: 4, fontWeight: FontWeight.w800, color: gold),
+                            ),
+                            const SizedBox(height: 18),
+                            Text(
+                              tr('This certifies that'),
+                              style: const TextStyle(fontSize: 11, fontStyle: FontStyle.italic, color: RL.slate),
+                            ),
+                            const SizedBox(height: 8),
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                name,
+                                maxLines: 1,
+                                style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w800, fontStyle: FontStyle.italic, color: RL.navy, letterSpacing: 0.3),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Container(width: 170, height: 1.4, color: gold),
+                            const SizedBox(height: 4),
+                            Text(
+                              'BIB $bib',
+                              style: const TextStyle(fontSize: 8.5, letterSpacing: 2, fontWeight: FontWeight.w800, color: RL.slate),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              tr('has successfully completed the'),
+                              style: const TextStyle(fontSize: 11, fontStyle: FontStyle.italic, color: RL.slate),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              race,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: RL.navy),
+                            ),
+                            Text(
+                              place,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 10, color: RL.slate),
+                            ),
+                            const SizedBox(height: 16),
+                            Container(
+                              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+                              decoration: BoxDecoration(
+                                border: Border.symmetric(horizontal: BorderSide(color: gold.withValues(alpha: 0.5))),
+                              ),
+                              child: Row(children: [stat(tr('Net time'), net), stat(tr('Gun time'), gun), stat(tr('Overall'), overall)]),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              category,
+                              maxLines: 1,
+                              style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: gold),
+                            ),
+                          ],
+                        ),
                       ),
-                      const SizedBox(width: 5),
-                      const Text('RunLah', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: RL.navy)),
-                    ],
+                    ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(event.toUpperCase(), maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 8, letterSpacing: 1.6, fontWeight: FontWeight.w700, color: RL.slate)),
-                  const SizedBox(height: 16),
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(tr('Certificate').toUpperCase(), style: const TextStyle(fontSize: 28, letterSpacing: 7, fontWeight: FontWeight.w900, color: RL.navy)),
-                  ),
-                  Text(tr('of achievement').toUpperCase(), style: const TextStyle(fontSize: 9.5, letterSpacing: 4, fontWeight: FontWeight.w800, color: gold)),
-                  const SizedBox(height: 18),
-                  Text(tr('This certifies that'), style: const TextStyle(fontSize: 11, fontStyle: FontStyle.italic, color: RL.slate)),
                   const SizedBox(height: 8),
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(name, maxLines: 1, style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w800, fontStyle: FontStyle.italic, color: RL.navy, letterSpacing: 0.3)),
-                  ),
-                  const SizedBox(height: 4),
-                  Container(width: 170, height: 1.4, color: gold),
-                  const SizedBox(height: 4),
-                  Text('BIB $bib', style: const TextStyle(fontSize: 8.5, letterSpacing: 2, fontWeight: FontWeight.w800, color: RL.slate)),
-                  const SizedBox(height: 12),
-                  Text(tr('has successfully completed the'), style: const TextStyle(fontSize: 11, fontStyle: FontStyle.italic, color: RL.slate)),
-                  const SizedBox(height: 4),
-                  Text(race, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: RL.navy)),
-                  Text(place, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 10, color: RL.slate)),
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
-                    decoration: BoxDecoration(
-                      border: Border.symmetric(horizontal: BorderSide(color: gold.withValues(alpha: 0.5))),
-                    ),
-                    child: Row(
-                      children: [
-                        stat(tr('Net time'), net),
-                        stat(tr('Gun time'), gun),
-                        stat(tr('Overall'), overall),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(category, maxLines: 1, style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: gold)),
-                  const Spacer(),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
@@ -235,9 +280,17 @@ class Certificate extends StatelessWidget {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Text('Race Director', style: TextStyle(fontSize: 15, fontStyle: FontStyle.italic, fontWeight: FontWeight.w300, color: RL.navySoft)),
+                            const Text(
+                              'Race Director',
+                              style: TextStyle(fontSize: 15, fontStyle: FontStyle.italic, fontWeight: FontWeight.w300, color: RL.navySoft),
+                            ),
                             Container(height: 1, color: RL.slate.withValues(alpha: 0.5), margin: const EdgeInsets.symmetric(vertical: 3)),
-                            Text(organizer, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 7.5, color: RL.slate)),
+                            Text(
+                              organizer,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 7.5, color: RL.slate),
+                            ),
                           ],
                         ),
                       ),
@@ -253,7 +306,10 @@ class Certificate extends StatelessWidget {
                             dataModuleStyle: const QrDataModuleStyle(dataModuleShape: QrDataModuleShape.square, color: RL.navy),
                           ),
                           const SizedBox(height: 3),
-                          Text(verifyCode, style: const TextStyle(fontSize: 7, letterSpacing: 1.2, fontWeight: FontWeight.w800, color: RL.slate)),
+                          Text(
+                            verifyCode,
+                            style: const TextStyle(fontSize: 7, letterSpacing: 1.2, fontWeight: FontWeight.w800, color: RL.slate),
+                          ),
                         ],
                       ),
                     ],
@@ -273,21 +329,24 @@ class _Seal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => SizedBox(
-        width: 62,
-        height: 62,
-        child: CustomPaint(
-          painter: const _SealPainter(),
-          child: Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.emoji_events_rounded, size: 18, color: Colors.white),
-                Text(tr('Official').toUpperCase(), style: const TextStyle(fontSize: 6.5, letterSpacing: 1, fontWeight: FontWeight.w900, color: Colors.white)),
-              ],
+    width: 62,
+    height: 62,
+    child: CustomPaint(
+      painter: const _SealPainter(),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.emoji_events_rounded, size: 18, color: Colors.white),
+            Text(
+              tr('Official').toUpperCase(),
+              style: const TextStyle(fontSize: 6.5, letterSpacing: 1, fontWeight: FontWeight.w900, color: Colors.white),
             ),
-          ),
+          ],
         ),
-      );
+      ),
+    ),
+  );
 }
 
 class _SealPainter extends CustomPainter {
@@ -350,12 +409,7 @@ class _CertificateFrame extends CustomPainter {
       ..strokeCap = StrokeCap.round
       ..color = Certificate.gold;
     final dot = Paint()..color = Certificate.gold;
-    for (final (corner, dx, dy) in [
-      (inner.topLeft, 1.0, 1.0),
-      (inner.topRight, -1.0, 1.0),
-      (inner.bottomLeft, 1.0, -1.0),
-      (inner.bottomRight, -1.0, -1.0),
-    ]) {
+    for (final (corner, dx, dy) in [(inner.topLeft, 1.0, 1.0), (inner.topRight, -1.0, 1.0), (inner.bottomLeft, 1.0, -1.0), (inner.bottomRight, -1.0, -1.0)]) {
       final o = corner + Offset(6 * dx, 6 * dy);
       canvas.drawPath(
         Path()

@@ -101,7 +101,11 @@ class _EventRunTile extends StatelessWidget {
                   style: TextStyle(fontSize: 12.5, color: muted(context), fontFeatures: const [FontFeature.tabularFigures()]),
                 ),
                 const SizedBox(height: 4),
-                Pill(tr('Race Insights'), color: RL.amber, icon: Icons.insights_rounded),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Pill(tr('Race Insights'), color: RL.amber, icon: Icons.insights_rounded),
+                ),
               ],
             ),
           ),

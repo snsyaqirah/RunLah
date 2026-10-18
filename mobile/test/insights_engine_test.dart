@@ -114,7 +114,7 @@ void main() {
     final sim = RaceSim(event: event, field: field);
     final genMs = sw.elapsedMilliseconds;
     sw.reset();
-    final s = sim.insights(asOf: 1e9);
+    final s = sim.insights(asOf: sim.race.cutoffS.toDouble());
     final computeMs = sw.elapsedMilliseconds;
     final r = s.result(sim.youId);
     final halves = s.sections(sim.youId, SectionSet.halves);

@@ -152,7 +152,7 @@ class _WhereTabState extends State<WhereTab> with AutomaticKeepAliveClientMixin 
 
     final dots = <MapDot>[
       if (m.key == 'male' || m.key == 'female')
-        MapDot(point: race.finish.location, color: RL.navy, size: 22, icon: Icons.emoji_events_rounded, label: m.key == 'male' ? tr('Male winner') : tr('Female winner')),
+        MapDot(point: race.finish.location, color: RL.navy, size: 24, icon: Icons.emoji_events_rounded),
       if (_friends)
         for (var i = 0; i < friends.length; i++)
           MapDot(
@@ -160,7 +160,7 @@ class _WhereTabState extends State<WhereTab> with AutomaticKeepAliveClientMixin 
             color: friends[i].$1 == sim.youId ? RL.amber : RL.series[(i % (RL.series.length - 1)) + 1],
             estimated: friends[i].$2.estimated,
             size: 16,
-            label: _mapLabel(context, friends[i].$1 == sim.youId ? tr('You') : firstNameOf(context, sim.participant(friends[i].$1)), friends[i].$2, units),
+            label: friends[i].$1 == sim.youId ? tr('You') : firstNameOf(context, sim.participant(friends[i].$1)),
             onTap: () => openInsights(context, friends[i].$1, tab: 2),
           ),
       MapDot(
@@ -258,7 +258,7 @@ class _WhereTabState extends State<WhereTab> with AutomaticKeepAliveClientMixin 
                 race: race,
                 dots: dots,
                 doneUpTo: me.d > 0 ? me.d : null,
-                showLandmarks: true,
+                showLandmarks: false,
                 padding: const EdgeInsets.fromLTRB(28, 56, 28, 28),
               ),
             ),

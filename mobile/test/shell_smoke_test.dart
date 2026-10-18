@@ -8,8 +8,8 @@ void main() {
   testWidgets('shell renders and demo director opens', (tester) async {
     await pumpScreen(tester, (_) => const Shell());
     expect(find.text('Home'), findsWidgets);
-    await tester.tap(find.byIcon(Icons.tune_rounded));
+    await tester.tap(find.byKey(const ValueKey('demo-director-pill')));
     await tester.pumpAndSettle();
-    expect(find.text('Demo director'), findsOneWidget);
+    expect(find.descendant(of: find.byType(BottomSheet), matching: find.text('Demo director')), findsOneWidget);
   });
 }

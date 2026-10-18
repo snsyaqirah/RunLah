@@ -1,7 +1,7 @@
 // Every runner in the payload: kinematics identical to RaceSim.distanceAt,
 // drawn as glowing instanced dots (replay) or little figures (drone view).
-import { Color, Euler, InstancedMesh, Matrix4, PlaneGeometry, Quaternion, Vector3 } from 'three';
-import { blobMaterial, dotMaterial, figureMaterial } from './materials.js';
+import { Color, Euler, InstancedMesh, Matrix4, Mesh, PlaneGeometry, Quaternion, Vector3 } from 'three';
+import { blobMaterial, dotMaterial, figureMaterial, groundRingMaterial } from './materials.js';
 import { hash01, segment } from './util.js';
 
 export const COLORS = {
@@ -68,7 +68,7 @@ export class Runners {
     this.byId = new Map(this.list.map((r) => [r.id, r]));
     const N = this.list.length;
 
-    this.dots = new InstancedMesh(new PlaneGeometry(1, 1), dotMaterial({ worldSize: 7, minPx: 2.3, maxPx: 9 }), Math.max(1, N));
+    this.dots = new InstancedMesh(new PlaneGeometry(1, 1), dotMaterial({ worldSize: 10, minPx: 3.6, maxPx: 12 }), Math.max(1, N));
     this.dots.frustumCulled = false;
     this.dots.renderOrder = 5;
     this.list.forEach((r, i) => this.dots.setColorAt(i, r.color));
@@ -96,6 +96,14 @@ export class Runners {
     this.figureIds = new Int32Array(Math.max(1, N));
 
     this.special = this.list.filter((r) => r.cls === 'you' || r.cls === 'friend' || r.focus);
+    // Drone view: pulsing ring on the ground under the focus runner.
+    this.focusRing = new Mesh(new PlaneGeometry(1, 1), groundRingMaterial(COLORS.you, { pulse: true }));
+    this.focusRing.rotation.x = -Math.PI / 2;
+    this.focusRing.scale.setScalar(3.4);
+    this.focusRing.visible = false;
+    this.focusRing.renderOrder = 4;
+    scene.add(this.focusRing);
+    this.focus = this.list.find((r) => r.focus) || null;
     this.pickedId = null;
     this._m = new Matrix4();
     this._q = new Quaternion();
@@ -186,7 +194,7 @@ export class Runners {
       mArr[o + 13] = r.y;
       mArr[o + 14] = r.z;
       const ci = r.i * 3;
-      const col = r.id === this.pickedId ? this._c.set(COLORS.picked) : r.color;
+      const col = r.id === this.pickedId ? this._white() : r.color;
       cArr[ci] = col.r * alpha;
       cArr[ci + 1] = col.g * alpha;
       cArr[ci + 2] = col.b * alpha;
@@ -197,10 +205,10 @@ export class Runners {
         const lean = running ? 0.13 : 0.02;
         const yaw = Math.atan2(r.tx, r.tz);
         q.setFromEuler(this._euler(lean, yaw));
-        const big = r.cls === 'you' || r.focus ? 1.08 : 1;
+        const big = r.cls === 'you' || r.focus ? 1.12 : 1;
         m.compose(p.set(r.x, bob, r.z), q, s.set(big, big, big));
         this.figures.setMatrixAt(fig, m);
-        this.figures.setColorAt(fig, r.id === this.pickedId ? this._c.set(COLORS.picked) : this.droneColor(r));
+        this.figures.setColorAt(fig, r.id === this.pickedId ? this._white() : this.droneColor(r));
         m.compose(p.set(r.x, 0.25, r.z), this._q0 || (this._q0 = new Quaternion()), s.set(1, 1, 1));
         this.blobs.setMatrixAt(fig, m);
         this.figureIds[fig] = r.i;
@@ -214,6 +222,9 @@ export class Runners {
     this.blobs.count = fig;
     this.figures.visible = drone;
     this.blobs.visible = drone;
+    const f = this.focus;
+    this.focusRing.visible = !!(drone && f && f.alpha > 0.05 && f.d > figMin && f.d < figMax);
+    if (this.focusRing.visible) this.focusRing.position.set(f.x, 0.3, f.z);
     if (fig > 0) {
       this.figures.instanceMatrix.needsUpdate = true;
       this.figures.instanceColor.needsUpdate = true;
@@ -248,10 +259,9 @@ export class Runners {
 
   /** Drone-view legend: your category amber, other men blue, women green. */
   droneColor(r) {
-    if (r.cls === 'you') return this._c.set(COLORS.you);
-    if (r.cls === 'friend') return this._c.set(COLORS.friend);
-    if (r.cls === 'cat') return this._c.set(COLORS.cat);
-    return this._c.set(r.g === 'F' ? COLORS.F : COLORS.M);
+    const c = this._dc || (this._dc = Object.fromEntries(Object.entries(COLORS).map(([k, v]) => [k, new Color(v)])));
+    if (r.cls === 'you' || r.cls === 'friend' || r.cls === 'cat') return c[r.cls];
+    return r.g === 'F' ? c.F : c.M;
   }
 
   /** Nearest visible runner to a screen point (CSS px), or null. */
@@ -278,6 +288,10 @@ export class Runners {
       for (const r of this.list) consider(r, 0);
     }
     return best;
+  }
+
+  _white() {
+    return this._w || (this._w = new Color(COLORS.picked));
   }
 
   get(id) {

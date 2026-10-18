@@ -215,6 +215,18 @@ class ActivityStore extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// "Delete my data": forget every saved run and queued point. Sample runs
+  /// are not seeded again.
+  void clearAll() {
+    _activities.clear();
+    _queue.clear();
+    _recount();
+    _persistActivities();
+    _persistQueue();
+    prefs.setBool(_kSeeded, true);
+    notifyListeners();
+  }
+
   // ------------------------------------------------------------ the queue
 
   /// Number of points waiting for upload. Listen to this instead of the

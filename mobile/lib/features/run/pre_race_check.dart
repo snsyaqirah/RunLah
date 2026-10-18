@@ -82,7 +82,7 @@ class _PreRaceCheckCardState extends State<PreRaceCheckCard> {
       _gpsDone = false;
       _batteryDone = false;
     });
-    final loc = await _guard(() => tracking.locationReadiness(request: request), Duration(seconds: request ? 60 : 6));
+    final loc = await _guard(() => tracking.locationReadiness(request: request), Duration(seconds: request ? 90 : 5));
     if (!mounted) return;
     setState(() => _loc = loc ?? LocationReadiness.unsupported);
 

@@ -164,7 +164,11 @@ DemoField generateDemoField(Race race, {int seed = 2026}) {
         : math.max(2.0, 18 + math.pow(q, 1.15) * 880 + r.normal() * (4 + 26 * q));
     final crowding = 0.02 + q * 0.09 + r.next() * 0.03;
     final fade = 0.02 + q * 0.06 + r.normal() * 0.035;
-    final cum = _plan(r, targets[i], race.distanceM, crowding, fade);
+    // Every finisher crosses before the cutoff (gun time), so official
+    // results count the full 11,664. The slowest spread over the last 30 min.
+    final maxNet = race.cutoffS - startDelay - 20;
+    final net = targets[i] <= maxNet ? targets[i] : maxNet - r.next() * 1800;
+    final cum = _plan(r, net, race.distanceM, crowding, fade);
     final bib = (bibCounter++).toString();
     if (bib == '34144') bibCounter++;
     participants.add(Participant(

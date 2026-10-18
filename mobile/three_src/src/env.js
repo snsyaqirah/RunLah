@@ -178,17 +178,17 @@ export class Environment {
         }
         void main() {
           float dist = length(vW - cameraPosition);
-          vec3 night = vec3(0.016, 0.026, 0.05);
-          vec3 day = vec3(0.10, 0.11, 0.115);
+          vec3 night = vec3(0.0045, 0.0065, 0.014);
+          vec3 day = vec3(0.07, 0.08, 0.072);
           vec3 col = mix(night, day, uDay);
           float fadeNear = 1.0 - smoothstep(1500.0, 9000.0, dist);
           float minor = gridLine(vW.xz, 100.0, 1.2) * fadeNear;
           float major = gridLine(vW.xz, 1000.0, 1.6) * (1.0 - smoothstep(4000.0, 16000.0, dist));
-          vec3 gridCol = mix(vec3(0.10, 0.22, 0.45), vec3(0.25, 0.28, 0.32), uDay);
-          col += gridCol * (minor * 0.22 + major * 0.45) * (0.45 + 0.55 * uNight);
-          // City glow under the course.
+          vec3 gridCol = mix(vec3(0.02, 0.06, 0.16), vec3(0.09, 0.1, 0.11), uDay);
+          col += gridCol * (minor * 0.3 + major * 0.55) * (0.5 + 0.5 * uNight);
+          // Faint sodium-light haze under the city.
           float r = length(vW.xz - uCentre);
-          col += vec3(0.10, 0.07, 0.16) * exp(-r * r / 9.0e6) * uNight;
+          col += vec3(0.016, 0.009, 0.006) * exp(-r * r / 1.2e7) * uNight;
           col = applyFog(col, dist);
           gl_FragColor = vec4(col, 1.0);
           #include <colorspace_fragment>
@@ -258,7 +258,9 @@ export class Environment {
     this.hemi.groundColor.copy(U.uGroundAmb.value).multiplyScalar(2.0);
     this.hemi.intensity = 1;
 
-    const fog = U.uFogColor.value.copy(this._hor).lerp(this._top, 0.25).multiplyScalar(0.9);
+    // Haze: thin, and bluer than the horizon glow so daylight doesn't turn orange.
+    const fog = U.uFogColor.value.copy(this._hor).lerp(this._top, 0.5 + 0.25 * day).multiplyScalar(0.85 - 0.1 * day);
+    U.uFogDensity.value = 0.00007 - 0.000042 * day;
     this.scene.fog.color.copy(fog);
     this.scene.fog.density = U.uFogDensity.value;
   }

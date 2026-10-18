@@ -204,12 +204,16 @@ export function buildCity(scene, data, route, landmarks, trees) {
       let dense = 0;
       for (const [cx, cz, r, w] of cbd) dense = Math.max(dense, w * Math.exp(-((px - cx) ** 2 + (pz - cz) ** 2) / (r * r)));
       const fromCentre = Math.hypot(px - b.cx, pz - b.cz) / 4500;
-      const keep = 0.32 + dense * 0.55 - Math.max(0, fromCentre - 0.6) * 0.5;
+      // Every stretch of the course gets a neighbourhood around it.
+      const nearRoad = hash.clearance(px, pz);
+      const along = nearRoad < 100 ? 0.3 : 0;
+      const keep = 0.2 + dense * 0.5 + along - Math.max(0, fromCentre - 0.55) * 0.45;
       if (rand() > keep) continue;
       const w = 16 + rand() * 30 + dense * 18;
       const d = 16 + rand() * 30 + dense * 18;
       const half = Math.hypot(w, d) / 2;
-      if (hash.clearance(px, pz) < half + 16) continue;
+      const clear = nearRoad < 100 ? nearRoad : hash.clearance(px, pz);
+      if (clear < half + 16) continue;
       let blocked = false;
       for (const l of lms) {
         if (Math.hypot(px - l.x, pz - l.z) < l.r + half) {
@@ -218,15 +222,17 @@ export function buildCity(scene, data, route, landmarks, trees) {
         }
       }
       if (blocked) continue;
-      const tall = rand() < 0.12 + dense * 0.35;
-      const h = tall ? 70 + rand() * (110 + dense * 170) : 10 + rand() * rand() * 55 + dense * 25;
+      const tall = rand() < 0.06 + dense * 0.3;
+      let h = tall ? 60 + rand() * (90 + dense * 170) : 8 + rand() * rand() * 40 + dense * 20;
+      // Keep the street canyon open so the course stays visible from above.
+      h = Math.min(h, 12 + Math.max(0, clear - half) * 0.9);
       blocks.push([px, pz, w, d, h, 0.38 + (rand() - 0.5) * 0.25]);
     }
   }
 
   const geo = new BoxGeometry(1, 1, 1);
   geo.translate(0, 0.5, 0);
-  const mat = facadeMaterial({ style: STYLE.office, base: '#283244', win: '#ffd59a', density: 0.38 });
+  const mat = facadeMaterial({ style: STYLE.office, base: '#2a3448', win: '#ffcf86', density: 0.5 });
   const mesh = new InstancedMesh(geo, mat, blocks.length);
   const m = new Matrix4();
   const q = new Quaternion();

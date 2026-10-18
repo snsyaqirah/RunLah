@@ -159,6 +159,11 @@ class RaceSim extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Start the pre-race countdown (real time). Called once at app start.
+  void startCountdown() {
+    if (status == RaceStatus.preRace) play();
+  }
+
   /// Organizer taps "Gun". Starts the race clock at 0.
   void fireGun() {
     if (status != RaceStatus.preRace) return;
@@ -200,6 +205,9 @@ class RaceSim extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// A runner's results name (full / bib only) changed: rebuild result lists.
+  void notifyResultsChanged() => notifyListeners();
+
   /// Back to before the gun, everything cleared.
   void reset() {
     pause();
@@ -219,8 +227,13 @@ class RaceSim extends ChangeNotifier {
     final dt = nowWall.difference(_lastTick ?? nowWall).inMicroseconds / 1e6;
     _lastTick = nowWall;
     if (status == RaceStatus.preRace) {
-      // Countdown runs at real speed until someone fires the gun.
-      clock.value = math.min(-1, clock.value + dt);
+      // Countdown runs at real speed; the gun goes at 0:00 if nobody fired it.
+      final next = clock.value + dt;
+      if (next >= 0) {
+        fireGun();
+      } else {
+        clock.value = next;
+      }
       return;
     }
     if (status == RaceStatus.closed && clock.value >= race.cutoffS + 600) return;

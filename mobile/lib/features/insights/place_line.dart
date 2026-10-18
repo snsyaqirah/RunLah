@@ -170,7 +170,7 @@ class CrowdPainter extends CustomPainter {
     );
 
     // Crowd.
-    final n = math.max(12, (w / 8.5).floor());
+    final n = math.max(12, (w / 11.5).floor());
     final base = crowdColor ?? (dark ? Colors.white : RL.navy);
     final p = Paint()
       ..style = PaintingStyle.stroke
@@ -183,7 +183,7 @@ class CrowdPainter extends CustomPainter {
       if ((cx - x).abs() < 11) continue;
       final hh = h * (0.42 + _rnd(i + 99) * 0.16);
       final passed = cx < x;
-      final c = passed ? accent.withValues(alpha: 0.38) : base.withValues(alpha: dark ? 0.16 : 0.13);
+      final c = passed ? accent.withValues(alpha: dark ? 0.5 : 0.32) : base.withValues(alpha: dark ? 0.16 : 0.12);
       p
         ..color = c
         ..strokeWidth = hh * 0.11;

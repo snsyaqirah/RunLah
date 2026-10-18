@@ -314,6 +314,8 @@ class _CompareTabState extends State<CompareTab> with AutomaticKeepAliveClientMi
                       showTitles: true,
                       interval: step,
                       reservedSize: 46,
+                      minIncluded: false,
+                      maxIncluded: false,
                       getTitlesWidget: (v, meta) => SideTitleWidget(
                         meta: meta,
                         child: Text(

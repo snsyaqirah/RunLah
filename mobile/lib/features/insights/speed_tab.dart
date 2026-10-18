@@ -379,13 +379,22 @@ class _SpeedTabState extends State<SpeedTab> with AutomaticKeepAliveClientMixin 
           Row(
             children: [
               Expanded(
-                child: Text(
-                  '${ordinal(first.round())} → ${ordinal(last.round())}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: ink(context), fontFeatures: tabular),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Row(
+                    children: [
+                      Text(ordinal(first.round()), style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: muted(context), fontFeatures: tabular)),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
+                        child: Icon(Icons.arrow_forward_rounded, size: 20, color: muted(context)),
+                      ),
+                      Text(ordinal(last.round()), style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: ink(context), fontFeatures: tabular)),
+                    ],
+                  ),
                 ),
               ),
+              const SizedBox(width: 8),
               Pill(
                 gained >= 0 ? tr('+{n} places', {'n': fmtInt(gained.round())}) : tr('−{n} places', {'n': fmtInt((-gained).round())}),
                 color: gained >= 0 ? RL.green : RL.red,
@@ -393,8 +402,9 @@ class _SpeedTabState extends State<SpeedTab> with AutomaticKeepAliveClientMixin 
             ],
           ),
           const SizedBox(height: 14),
-          SizedBox(
+          Container(
             height: 190,
+            padding: const EdgeInsets.only(right: 12, top: 6),
             child: LineChart(
               LineChartData(
                 minX: 0,
@@ -597,7 +607,7 @@ class _SectionBars extends StatelessWidget {
     const chartH = 128.0;
     final dense = list.length > 9;
     return SizedBox(
-      height: chartH + 44,
+      height: chartH * 1.06 + 46,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
@@ -653,7 +663,7 @@ class _SectionBars extends StatelessWidget {
                                     ? [const Color(0xFFFFB547), RL.amber]
                                     : i == selected
                                         ? [primary, primary.withValues(alpha: 0.8)]
-                                        : [primary.withValues(alpha: 0.42), primary.withValues(alpha: 0.25)],
+                                        : [primary.withValues(alpha: 0.62), primary.withValues(alpha: 0.4)],
                               ),
                               boxShadow: i == selected ? [BoxShadow(color: (i == fastest ? RL.amber : primary).withValues(alpha: 0.35), blurRadius: 10, offset: const Offset(0, 3))] : null,
                             ),
@@ -925,7 +935,7 @@ class FinishHistogram extends StatelessWidget {
                               duration: Duration(milliseconds: 600 + 30 * i),
                               curve: Curves.easeOutCubic,
                               builder: (_, v, _) => Container(
-                                height: math.max(bins[i] > 0 ? 2.0 : 0.0, barsH * v),
+                                height: math.max(bins[i] > 0 ? 2.0 : 0.0, (barsH - 18) * v),
                                 decoration: BoxDecoration(
                                   color: i == myBin ? RL.amber : primary.withValues(alpha: 0.32),
                                   borderRadius: const BorderRadius.vertical(top: Radius.circular(3)),

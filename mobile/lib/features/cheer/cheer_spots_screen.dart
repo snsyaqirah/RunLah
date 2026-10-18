@@ -117,7 +117,10 @@ class _CheerSpotsScreenState extends State<CheerSpotsScreen> with SingleTickerPr
                   right: 10,
                   child: Align(
                     alignment: Alignment.topLeft,
-                    child: Pill(tr('Tap the course to drop your own spot'), color: RL.navy, filled: true, icon: Icons.touch_app_rounded),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Pill(tr('Tap the course to drop your own spot'), color: RL.navy, filled: true, icon: Icons.touch_app_rounded),
+                    ),
                   ),
                 ),
               ],
@@ -347,7 +350,7 @@ class _SpotRunnerRow extends StatelessWidget {
                   ],
                 ),
               ),
-              if (badge != null) ...[const SizedBox(width: 8), badge],
+              if (badge != null) ...[const SizedBox(width: 8), Flexible(child: FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerRight, child: badge))],
               IconButton(
                 tooltip: tr('Leave-now alert'),
                 onPressed: !canAlarm ? null : () => live.setAlarm(spot, id, context.read<NotificationCenter>(), alarm == null),

@@ -45,7 +45,7 @@ class SetupTab extends StatelessWidget {
         extra: Wrap(
           spacing: 6,
           runSpacing: 6,
-          children: [for (final c in race.checkpoints) Pill('${cpLabel(c)} · ${c.name}', color: c.type == CheckpointType.split ? RL.teal : RL.navy)],
+          children: [for (final c in race.checkpoints) _CpChip(label: cpLabel(c), name: c.name, color: c.type == CheckpointType.split ? RL.teal : RL.navy)],
         ),
       ),
       _Step(
@@ -150,6 +150,33 @@ class _Step extends StatelessWidget {
             extra!,
           ],
         ],
+      ),
+    );
+  }
+}
+
+/// Checkpoint chip that ellipsizes instead of overflowing on narrow phones.
+class _CpChip extends StatelessWidget {
+  const _CpChip({required this.label, required this.name, required this.color});
+  final String label;
+  final String name;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final c = dark && color == RL.navy ? Colors.white : color;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      decoration: BoxDecoration(color: color.withValues(alpha: dark ? 0.3 : 0.12), borderRadius: BorderRadius.circular(999)),
+      child: Text.rich(
+        TextSpan(children: [
+          TextSpan(text: label, style: const TextStyle(fontWeight: FontWeight.w900)),
+          TextSpan(text: ' · $name'),
+        ]),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: c),
       ),
     );
   }

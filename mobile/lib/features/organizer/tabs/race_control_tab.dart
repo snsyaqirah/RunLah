@@ -264,6 +264,7 @@ class _LiveControls extends StatelessWidget {
                   confirm: tr('Close race'),
                   color: RL.red,
                   icon: Icons.lock_clock_rounded,
+                  confirmKey: const Key('confirm-close'),
                 );
                 if (ok && context.mounted) context.read<RaceSim>().closeRace();
               },

@@ -20,12 +20,13 @@ const options = {
   target: ['chrome90', 'safari15', 'firefox90'],
   legalComments: 'none',
   treeShaking: true,
+  outfile: resolve(here, '.preview/bundle.js'),
   write: false,
   logLevel: 'warning',
 };
 
 function emit(result) {
-  const js = result.outputFiles.find((f) => f.path.endsWith('.js')).text
+  const js = result.outputFiles[0].text
     // Never let the bundle close the inline <script> early.
     .replace(/<\/script/gi, '<\\/script');
   const css = readFileSync(resolve(here, 'src/style.css'), 'utf8').replace(/\s*\n\s*/g, '');

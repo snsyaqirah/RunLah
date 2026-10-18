@@ -110,7 +110,16 @@ class _RankingScreenState extends State<RankingScreen> {
                   LeadersStrip(live: _live),
                   const SizedBox(height: 12),
                 ],
-                SingleChildScrollView(
+              ],
+            ),
+          ),
+          SliverPersistentHeader(
+            pinned: true,
+            delegate: _PinnedBar(
+              color: Theme.of(context).scaffoldBackgroundColor,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
@@ -132,7 +141,13 @@ class _RankingScreenState extends State<RankingScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 12),
+              ),
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+            sliver: SliverList.list(
+              children: [
                 if (list.length >= 3) ...[
                   _Podium(ids: list.take(3).toList(), times: [for (final id in list.take(3)) timeOf(id)]),
                   const SizedBox(height: 12),
@@ -196,6 +211,25 @@ class _RankingScreenState extends State<RankingScreen> {
       ),
     );
   }
+}
+
+/// Keeps the segment chips reachable while scrolling a long ranking.
+class _PinnedBar extends SliverPersistentHeaderDelegate {
+  _PinnedBar({required this.child, required this.color});
+  final Widget child;
+  final Color color;
+
+  @override
+  double get minExtent => 56;
+  @override
+  double get maxExtent => 56;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) =>
+      Container(color: color, alignment: Alignment.centerLeft, child: child);
+
+  @override
+  bool shouldRebuild(_PinnedBar old) => true;
 }
 
 /// Leading man and woman still out on the course, refreshed ≤ 1 Hz.

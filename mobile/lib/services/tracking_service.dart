@@ -70,9 +70,12 @@ class TrackingService extends ChangeNotifier {
 
   /// Location permission + service state. Never throws.
   Future<LocationReadiness> locationReadiness({bool request = false}) async {
+    // Status checks answer instantly on a phone; a platform without the
+    // plugin may never answer, so they time out. Permission prompts don't.
+    const quick = Duration(seconds: 4);
     try {
-      if (!kIsWeb && !await Geolocator.isLocationServiceEnabled()) return LocationReadiness.serviceOff;
-      var p = await Geolocator.checkPermission();
+      if (!kIsWeb && !await Geolocator.isLocationServiceEnabled().timeout(quick)) return LocationReadiness.serviceOff;
+      var p = await Geolocator.checkPermission().timeout(quick);
       if (request && p == LocationPermission.denied) p = await Geolocator.requestPermission();
       if (request && p == LocationPermission.whileInUse && !kIsWeb) {
         // Second request asks to upgrade to "Always" (Android 10+ / iOS).

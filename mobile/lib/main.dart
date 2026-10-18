@@ -23,7 +23,7 @@ Future<void> main() async {
 
   // Demo mode: a simulated race stands in for the Laravel API + Reverb.
   final event = buildDemoEvent();
-  final sim = RaceSim(event: event, field: generateDemoField(event.races.first));
+  final sim = RaceSim(event: event, field: generateDemoField(event.races.first))..startCountdown();
 
   final follows = FollowsController(sim, prefs);
   final insights = InsightsController(sim);

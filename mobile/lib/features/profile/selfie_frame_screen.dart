@@ -288,8 +288,16 @@ class _FinisherOverlay extends StatelessWidget {
               Row(
                 children: [
                   const RunLahMark(size: 15),
-                  const Spacer(),
-                  Text(data.date, style: const TextStyle(color: _white, fontWeight: FontWeight.w700, fontSize: 12)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      data.date,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.end,
+                      style: const TextStyle(color: _white, fontWeight: FontWeight.w700, fontSize: 12),
+                    ),
+                  ),
                 ],
               ),
               const Spacer(),
@@ -344,16 +352,24 @@ class _BibOverlay extends StatelessWidget {
                 decoration: BoxDecoration(color: RL.navy.withValues(alpha: 0.85), borderRadius: BorderRadius.circular(99)),
                 child: const RunLahMark(size: 13),
               ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(color: RL.navy.withValues(alpha: 0.85), borderRadius: BorderRadius.circular(12)),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(data.headline, style: const TextStyle(color: RL.amber, fontWeight: FontWeight.w900, fontSize: 9.5, letterSpacing: 1.5)),
-                    Text(data.big, style: const TextStyle(color: _white, fontWeight: FontWeight.w900, fontSize: 24, fontFeatures: _tab)),
-                  ],
+              const SizedBox(width: 8),
+              Expanded(
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(color: RL.navy.withValues(alpha: 0.85), borderRadius: BorderRadius.circular(12)),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(data.headline, style: const TextStyle(color: RL.amber, fontWeight: FontWeight.w900, fontSize: 9.5, letterSpacing: 1.5)),
+                          Text(data.big, style: const TextStyle(color: _white, fontWeight: FontWeight.w900, fontSize: 24, fontFeatures: _tab)),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ],

@@ -49,7 +49,7 @@ export class Course {
     scene.add(this.road);
 
     // Glowing route line (wide glow in the overview, a painted blue line up close).
-    this.glowMat = ribbonMaterial({ halfWidth: 42, core: 0.16 });
+    this.glowMat = ribbonMaterial({ halfWidth: 26, core: 0.2 });
     this.glow = new Mesh(ribbonGeometry(route, 0, route.distance, 10), this.glowMat);
     this.glow.frustumCulled = false;
     this.glow.renderOrder = 2;
@@ -70,8 +70,8 @@ export class Course {
         continue;
       }
       const color = isEnd ? '#ffb547' : '#55c8ff';
-      const h = isEnd ? 260 : 150;
-      const beamGeo = new CylinderGeometry(isEnd ? 5 : 3.2, isEnd ? 5 : 3.2, 1, 14, 1, true);
+      const h = isEnd ? 320 : 190;
+      const beamGeo = new CylinderGeometry(isEnd ? 16 : 11, isEnd ? 16 : 11, 1, 16, 1, true);
       beamGeo.translate(0, 0.5, 0);
       const beam = new Mesh(beamGeo, beamMaterial(color));
       beam.scale.y = h;
@@ -105,8 +105,8 @@ export class Course {
       u.uFlow.value = 0.0;
       this.beams.visible = false;
     } else {
-      u.uHalf.value = 42;
-      u.uCore.value = 0.16;
+      u.uHalf.value = 26;
+      u.uCore.value = 0.2;
       u.uGlow.value = 1;
       u.uY.value = 1.2;
       u.uFlow.value = 1;

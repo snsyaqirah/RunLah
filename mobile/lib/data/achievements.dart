@@ -813,7 +813,9 @@ class Achievements extends ChangeNotifier {
       ..targetTimeS = 6000
       ..displayName = 'Arep';
     await prefs.setString('lang', lang);
+    store.clearAll();
     sim.you.resultsName = ResultsName.full;
+    sim.notifyResultsChanged();
     _seen = _dayOneSeen();
     await prefs.setStringList(_seenKey, _seen.toList());
     _club = defaultClub;

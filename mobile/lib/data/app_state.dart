@@ -107,6 +107,13 @@ class FollowsController extends ChangeNotifier {
     _save();
   }
 
+  /// "Delete my data": stop following everyone.
+  void clearAll() {
+    _ids.clear();
+    _muted.clear();
+    _save();
+  }
+
   void setNotify(int id, bool on) {
     on ? _muted.remove(id) : _muted.add(id);
     _save();

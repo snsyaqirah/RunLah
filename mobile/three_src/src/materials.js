@@ -73,7 +73,9 @@ export function facadeMaterial({ style = STYLE.office, base = '#2a3446', win = '
         vec3 v = normalize(cameraPosition - vW);
         float diff = max(dot(n, uSunDir), 0.0);
         vec3 amb = mix(uGroundAmb, uSkyAmb, n.y * 0.5 + 0.5);
-        vec3 col = uBase * (amb * 1.6 + uSunCol * diff * 1.5);
+        // Facades read lighter (concrete / glass) in daylight.
+        vec3 base = mix(uBase, max(uBase * 1.8, vec3(0.2, 0.22, 0.26)), uDay);
+        vec3 col = base * (amb * 1.6 + uSunCol * diff * 1.5);
         float wall = 1.0 - smoothstep(0.55, 0.85, abs(vObjN.y));
         float u = abs(vObjN.x) > abs(vObjN.z) ? vObj.z : vObj.x;
         float y = vObj.y;
@@ -81,8 +83,11 @@ export function facadeMaterial({ style = STYLE.office, base = '#2a3446', win = '
         int style = int(uStyle + 0.5);
 
         if (style == 0) {
-          // Office block: grid of windows, some lit.
+          // Office block: grid of windows, some lit. Far away (sub-pixel
+          // windows) the pattern fades to its average so it doesn't shimmer.
           vec2 cell = vec2(u / uBay, y / uFloor);
+          vec2 fw = fwidth(cell);
+          float aa = 1.0 - smoothstep(0.25, 0.7, max(fw.x, fw.y));
           vec2 f = fract(cell);
           vec2 id = floor(cell);
           float win = step(0.16, f.x) * step(f.x, 0.84) * step(0.28, f.y) * step(f.y, 0.86);
@@ -90,9 +95,11 @@ export function facadeMaterial({ style = STYLE.office, base = '#2a3446', win = '
           float warm = hash12(id * 1.37 + vSeed);
           vec3 wc = mix(uWin, vec3(0.75, 0.88, 1.0), step(0.7, warm)) * (0.6 + 0.6 * warm);
           float top = 1.0 - step(0.0, y - (vH > 0.0 ? vH : 1e5) + 1.5);
-          col = mix(col, col * 0.55 + uSkyAmb * 0.25 * fres, win * wall * 0.6);
-          col += wc * win * lit * wall * top * uNight * 1.25;
-          col += uWin * win * wall * (1.0 - uNight) * fres * 0.08;
+          float winA = mix(0.38, win, aa);
+          float litA = mix(0.38 * uDensity * 0.42, win * lit, aa);
+          col = mix(col, col * 0.55 + uSkyAmb * 0.25 * fres, winA * wall * 0.6);
+          col += mix(uWin * 0.8, wc, aa) * litA * wall * top * uNight * 1.25;
+          col += uWin * winA * wall * (1.0 - uNight) * fres * 0.08;
         } else if (style == 1) {
           // Petronas: steel ribs and floor bands, floodlit silver at night.
           float ang = atan(vObj.z, vObj.x);
@@ -105,14 +112,17 @@ export function facadeMaterial({ style = STYLE.office, base = '#2a3446', win = '
           col += uWin * step(0.65, hash12(floor(vec2(ang * 30.0, y / 4.0)) + 3.0)) * bands * uNight * 0.35;
         } else if (style == 2) {
           // Glass tower with diamond facets (Merdeka 118).
-          float a = fract((u + y * 0.55) / 14.0);
-          float b = fract((u - y * 0.55) / 14.0);
-          float lines = smoothstep(0.03, 0.0, min(min(a, 1.0 - a), min(b, 1.0 - b)));
+          vec2 q = vec2((u + y * 0.55) / 14.0, (u - y * 0.55) / 14.0);
+          vec2 fq = max(fwidth(q), vec2(1e-4));
+          vec2 dq = min(fract(q), 1.0 - fract(q)) / fq;
+          float lines = 1.0 - smoothstep(0.6, 1.6, min(dq.x, dq.y));
+          lines = mix(lines, 0.16, smoothstep(0.12, 0.45, max(fq.x, fq.y)));
           vec3 glass = mix(uBase, uSkyAmb * 1.3 + uHorizon * 0.4, fres * 0.8);
           col = glass * (amb * 1.4 + uSunCol * diff * 1.6) + uSunCol * pow(max(dot(reflect(-v, n), uSunDir), 0.0), 40.0) * 0.6;
           col += uAccent * lines * (0.25 + 0.75 * uNight) * 0.9;
           vec2 cell = vec2(u / 3.0, y / 4.0);
-          float lit = step(0.86, hash12(floor(cell) + 11.0)) * step(0.3, fract(cell.y)) ;
+          float aa = 1.0 - smoothstep(0.25, 0.7, max(fwidth(cell).x, fwidth(cell).y));
+          float lit = mix(0.06, step(0.86, hash12(floor(cell) + 11.0)) * step(0.3, fract(cell.y)), aa);
           col += uWin * lit * wall * uNight * 0.7;
         } else if (style == 3) {
           // Floodlit concrete (KL Tower shaft): colour wash from below.
@@ -284,7 +294,7 @@ export function blobMaterial() {
  * side (-1/+1) and the 2D normal, so width can change per mode.
  * Behind the focus runner (uProgress) the line turns amber.
  */
-export function ribbonMaterial({ halfWidth = 40, core = 0.18, ahead = '#3fa9ff', done = '#ffb547', y = 1.2 } = {}) {
+export function ribbonMaterial({ halfWidth = 26, core = 0.18, ahead = '#2f7fd6', done = '#ff9f1c', y = 1.2 } = {}) {
   return new ShaderMaterial({
     uniforms: {
       ...U,
@@ -331,7 +341,7 @@ export function ribbonMaterial({ halfWidth = 40, core = 0.18, ahead = '#3fa9ff',
         float glow = exp(-a * a * 5.0) * uGlow;
         vec3 base = vDist < uProgress ? uDone : uAhead;
         float pulse = pow(fract(vDist / 600.0 - uTime * 0.35), 12.0) * uFlow;
-        vec3 col = base * (core * 1.25 + glow * 0.45) + vec3(1.0) * core * pulse * 0.6;
+        vec3 col = base * (core * 0.8 + glow * 0.28) + vec3(1.0) * core * pulse * 0.5;
         float dist = length(vW - cameraPosition);
         float f = 1.0 - exp(-uFogDensity * uFogDensity * dist * dist);
         col *= 1.0 - clamp(f, 0.0, 1.0) * 0.85;
@@ -415,9 +425,9 @@ export function beamMaterial(color) {
       void main() {
         vec3 v = normalize(cameraPosition - vW);
         float facing = abs(dot(normalize(vN), v));
-        float a = pow(1.0 - vUv.y, 1.6) * (0.15 + 0.85 * pow(facing, 2.0));
-        a *= 0.55 + 0.45 * uNight;
-        gl_FragColor = vec4(uColor * a * 0.9, 1.0);
+        float a = pow(1.0 - vUv.y, 1.4) * pow(facing, 2.5);
+        a *= 0.6 + 0.4 * uNight;
+        gl_FragColor = vec4(uColor * a * 1.8, 1.0);
         #include <colorspace_fragment>
       }`,
     blending: AdditiveBlending,

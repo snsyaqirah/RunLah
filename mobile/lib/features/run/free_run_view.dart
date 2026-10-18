@@ -221,11 +221,13 @@ class _Starting extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return HeroPanel(
-      child: SizedBox(
-        height: 180,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 180),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            const SizedBox(height: 12),
             const CircularProgressIndicator(color: RL.amber),
             const SizedBox(height: 16),
             Text(tr('Getting a GPS fix…'), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),

@@ -418,7 +418,13 @@ class _GhostRow extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 6),
-              Text(gapText, style: TextStyle(fontWeight: FontWeight.w900, color: color, fontFeatures: tabular)),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 96),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(gapText, style: TextStyle(fontWeight: FontWeight.w900, color: color, fontFeatures: tabular)),
+                ),
+              ),
               if (!isYou)
                 IconButton(
                   tooltip: following ? tr('Unfollow') : tr('Follow'),

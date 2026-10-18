@@ -15,13 +15,36 @@ Future<void> openTab(WidgetTester tester, String label) async {
   await tester.pump(const Duration(milliseconds: 600));
 }
 
+/// The visible tab's vertical list (tab bar and CSV previews scroll sideways).
+final verticalList = find.byWidgetPredicate((w) => w is Scrollable && w.axisDirection == AxisDirection.down).hitTestable().first;
+
 /// Scrolls the visible tab's list to the end in steps (lays out every card).
 Future<void> scrollTab(WidgetTester tester, {int steps = 10}) async {
-  final list = find.byType(ListView).hitTestable().first;
   for (var i = 0; i < steps; i++) {
-    await tester.drag(list, const Offset(0, -350), warnIfMissed: false);
+    await tester.drag(verticalList, const Offset(0, -350), warnIfMissed: false);
     await tester.pump(const Duration(milliseconds: 120));
   }
+}
+
+/// Drags the nearest vertical scrollable so [target] sits mid-screen.
+Future<void> centre(WidgetTester tester, Finder target) async {
+  await tester.pump();
+  final rect = tester.getRect(target);
+  final mid = tester.view.physicalSize.height / tester.view.devicePixelRatio / 2;
+  final position = tester.state<ScrollableState>(verticalList).position;
+  position.jumpTo((position.pixels - (mid - rect.center.dy)).clamp(position.minScrollExtent, position.maxScrollExtent));
+  await tester.pump(const Duration(milliseconds: 300));
+}
+
+Future<TestApp> pumpDark(WidgetTester tester, Widget Function(TestApp app) child, {Size size = const Size(360, 740)}) async {
+  tester.view.physicalSize = size * 3;
+  tester.view.devicePixelRatio = 3;
+  addTearDown(tester.view.reset);
+  late TestApp app;
+  await tester.runAsync(() async => app = await TestApp.create());
+  await tester.pumpWidget(app.wrap(child(app), brightness: Brightness.dark));
+  await tester.pump(const Duration(milliseconds: 500));
+  return app;
 }
 
 void main() {
@@ -37,6 +60,19 @@ void main() {
     expect(hits.first.confidence, greaterThan(hits.last.confidence));
   });
 
+  testWidgets('dark mode: every tab renders at 360x740', (tester) async {
+    final app = await pumpDark(tester, (_) => const OrganizerScreen());
+    app.sim.fireGun();
+    app.sim.jumpTo(6200);
+    app.sim.pause();
+    await tester.pump(const Duration(milliseconds: 1500));
+    for (final t in ['Race control', 'Heatmap', 'SOS', 'Camera', 'Results', 'Setup']) {
+      await openTab(tester, t);
+      await scrollTab(tester, steps: 6);
+    }
+    await tester.pump(const Duration(seconds: 5));
+  });
+
   const sizes = [Size(390, 844), Size(360, 740)];
   for (final size in sizes) {
     final tag = '${size.width.round()}x${size.height.round()}';
@@ -46,7 +82,7 @@ void main() {
       expect(find.text('GUN'), findsOneWidget);
       await scrollTab(tester);
 
-      await tester.drag(find.byType(ListView).first, const Offset(0, 3000));
+      await tester.drag(verticalList, const Offset(0, 3000));
       await tester.pump(const Duration(milliseconds: 300));
       await tester.tap(find.byKey(const Key('gun-button')));
       await tester.pump(const Duration(milliseconds: 400));
@@ -59,8 +95,19 @@ void main() {
       app.sim.pause();
       await tester.pump(const Duration(milliseconds: 1200));
       await tester.pump(const Duration(milliseconds: 1200));
-      expect(find.text('Finishers per minute'.toUpperCase()), findsOneWidget);
-      expect(find.text('On course'), findsOneWidget);
+      await tester.scrollUntilVisible(find.text('On course'), 200, scrollable: verticalList);
+      await tester.scrollUntilVisible(find.text('Finishers per minute'.toUpperCase()), 200, scrollable: verticalList);
+      await tester.pump(const Duration(milliseconds: 800));
+
+      // Close the race from the console.
+      final close = find.byKey(const Key('close-race'));
+      await tester.scrollUntilVisible(close, -200, scrollable: verticalList);
+      await centre(tester, close);
+      await tester.tap(close);
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.tap(find.byKey(const Key('confirm-close')));
+      await tester.pump(const Duration(milliseconds: 600));
+      expect(app.sim.status, RaceStatus.closed);
       await scrollTab(tester);
       app.sim.pause();
     });
@@ -114,6 +161,7 @@ void main() {
       final pad = find.byKey(const Key('pad-record'));
       await tester.ensureVisible(pad);
       await tester.pump(const Duration(milliseconds: 300));
+      await centre(tester, find.byKey(const Key('pad-5')));
       for (final d in '34144'.split('')) {
         await tester.tap(find.byKey(Key('pad-$d')));
         await tester.pump(const Duration(milliseconds: 50));
@@ -125,6 +173,7 @@ void main() {
       expect(app.sim.staffReads.first.source, PassSource.manual);
 
       // Unknown bib on the keypad.
+      await centre(tester, find.byKey(const Key('pad-5')));
       for (final d in '999'.split('')) {
         await tester.tap(find.byKey(Key('pad-$d')));
         await tester.pump(const Duration(milliseconds: 50));
@@ -136,6 +185,7 @@ void main() {
       final sim = find.byKey(const Key('simulate-read'));
       await tester.ensureVisible(sim);
       await tester.pump(const Duration(milliseconds: 300));
+      await centre(tester, sim);
       for (var i = 0; i < 12; i++) {
         await tester.tap(sim);
         await tester.pump(const Duration(milliseconds: 350));
@@ -168,10 +218,13 @@ void main() {
       await openTab(tester, 'Setup');
       expect(find.text('Event ready for race day'), findsOneWidget);
       final importBibs = find.byKey(const Key('import-bibs'));
-      await tester.scrollUntilVisible(importBibs, 200, scrollable: find.byType(Scrollable).hitTestable().last);
+      await tester.scrollUntilVisible(importBibs, 200, scrollable: verticalList);
+      await centre(tester, importBibs);
       await tester.tap(importBibs);
+      await tester.pump(const Duration(milliseconds: 500));
       await tester.pump(const Duration(milliseconds: 1000));
       await tester.pump(const Duration(milliseconds: 1500));
+      await tester.pump(const Duration(milliseconds: 400));
       expect(find.textContaining('0 duplicates'), findsOneWidget);
       await scrollTab(tester);
     });
