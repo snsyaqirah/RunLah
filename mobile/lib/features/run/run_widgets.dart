@@ -12,6 +12,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../core/format.dart';
 import '../../core/l10n/i18n.dart';
 import '../../core/theme.dart';
+import '../../core/widgets/map_tiles.dart';
 import '../../data/activity_store.dart';
 import '../../data/models.dart';
 import '../../services/voice_service.dart';
@@ -456,7 +457,7 @@ class PaceChart extends StatelessWidget {
   }
 }
 
-/// Map of your own GPS track (CARTO tiles like [CourseMap]).
+/// Map of your own GPS track (same tiles as [CourseMap]).
 class TrackMap extends StatefulWidget {
   const TrackMap({super.key, required this.points, this.follow = false, this.interactive = false, this.live = false, this.fallbackCenter});
   final List<LatLng> points;
@@ -515,14 +516,7 @@ class _TrackMapState extends State<TrackMap> {
           onMapReady: () => _ready = true,
         ),
         children: [
-          TileLayer(
-            urlTemplate: dark
-                ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-                : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-            subdomains: const ['a', 'b', 'c', 'd'],
-            userAgentPackageName: 'com.runlah.runlah',
-            retinaMode: RetinaMode.isHighDensity(context),
-          ),
+          runlahTileLayer(context),
           if (pts.length >= 2)
             PolylineLayer(polylines: [
               Polyline(
@@ -550,7 +544,7 @@ class _TrackMapState extends State<TrackMap> {
               margin: const EdgeInsets.all(6),
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(color: (dark ? Colors.black : Colors.white).withValues(alpha: 0.7), borderRadius: BorderRadius.circular(4)),
-              child: Text('© OpenStreetMap · © CARTO', style: TextStyle(fontSize: 9, color: dark ? Colors.white70 : RL.slate)),
+              child: Text(mapAttribution, style: TextStyle(fontSize: 9, color: dark ? Colors.white70 : RL.slate)),
             ),
           ),
         ],

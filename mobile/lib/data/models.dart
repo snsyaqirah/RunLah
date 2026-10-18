@@ -210,10 +210,23 @@ class CheckpointPass {
 enum ResultStatus { finished, onCourse, dnf, dns }
 
 class PlaceInfo {
-  const PlaceInfo({required this.place, required this.of, required this.behind});
+  const PlaceInfo({required this.place, required this.of, required this.behind, int? finished, this.provisional = false})
+      : finished = finished ?? of;
   final int place;
+
+  /// Group size. Once the race is closed: the finishers. While it's live:
+  /// everyone in the group who has started (so "Top %" means something
+  /// before the back of the field is home).
   final int of;
+
+  /// Finishers behind you, plus (while live) runners still out on course.
   final int behind;
+
+  /// Finishers in the group so far.
+  final int finished;
+
+  /// Race still live: the place can still change.
+  final bool provisional;
 
   /// Share of the group ahead of you, 0–100.
   double get topPct => of == 0 ? 0 : (place - 1) / of * 100;

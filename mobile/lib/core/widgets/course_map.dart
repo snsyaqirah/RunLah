@@ -4,6 +4,7 @@ import 'package:latlong2/latlong.dart';
 
 import '../../data/models.dart';
 import '../theme.dart';
+import 'map_tiles.dart';
 
 /// A runner (or any point) drawn on the [CourseMap].
 class MapDot {
@@ -32,8 +33,8 @@ class MapDot {
 }
 
 /// The course map used everywhere: event preview, live run, cheer map,
-/// "Where were you", organizer console. Light/dark CARTO tiles over
-/// OpenStreetMap, the route in green, checkpoints and landmarks on top.
+/// "Where were you", organizer console. OpenStreetMap tiles
+/// (dark-filtered in dark mode), the route in green, checkpoints and landmarks on top.
 class CourseMap extends StatefulWidget {
   const CourseMap({
     super.key,
@@ -102,15 +103,7 @@ class _CourseMapState extends State<CourseMap> {
           onTap: onTap == null ? null : (_, p) => onTap(p),
         ),
         children: [
-          TileLayer(
-            urlTemplate: dark
-                ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-                : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-            subdomains: const ['a', 'b', 'c', 'd'],
-            userAgentPackageName: 'com.runlah.runlah',
-            tileProvider: _tiles,
-            retinaMode: RetinaMode.isHighDensity(context),
-          ),
+          runlahTileLayer(context, tileProvider: _tiles),
           PolylineLayer(
             polylines: [
               Polyline(
@@ -169,7 +162,7 @@ class _CourseMapState extends State<CourseMap> {
               margin: const EdgeInsets.all(6),
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(color: (dark ? Colors.black : Colors.white).withValues(alpha: 0.7), borderRadius: BorderRadius.circular(4)),
-              child: Text('© OpenStreetMap · © CARTO', style: TextStyle(fontSize: 9, color: dark ? Colors.white70 : RL.slate)),
+              child: Text(mapAttribution, style: TextStyle(fontSize: 9, color: dark ? Colors.white70 : RL.slate)),
             ),
           ),
         ],

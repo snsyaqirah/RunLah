@@ -136,4 +136,23 @@ void main() {
     expect(quarters.map((q) => double.parse(q.speedKph.toStringAsFixed(1))), [13.2, 13.8, 12.9, 12.8]);
     sim.dispose();
   });
+  test('live provisional places are measured against everyone who started', () {
+    final event = buildDemoEvent(raceDay: DateTime(2026, 10, 4));
+    final sim = RaceSim(event: event, field: generateDemoField(event.races.first));
+    final t = sim.crossingTime(sim.youId, sim.race.distanceM)! + 1;
+    final live = sim.insights(asOf: t);
+    final r = live.result(sim.youId);
+    expect(r.overall!.provisional, isTrue);
+    expect(r.overall!.of, sim.participants.length); // all 11,760 have started by 1:37
+    expect(r.overall!.finished, lessThan(500));
+    expect(r.overall!.topPct, lessThan(2));
+    expect(r.otherGenderAheadPct, greaterThan(99));
+    final official = sim.insights(asOf: sim.race.cutoffS.toDouble());
+    sim.closeRace();
+    final closed = sim.insights(asOf: sim.race.cutoffS.toDouble());
+    expect(official.result(sim.youId).overall!.provisional, isTrue);
+    expect(closed.result(sim.youId).overall!.provisional, isFalse);
+    expect(closed.result(sim.youId).overall!.of, 11664);
+    sim.dispose();
+  });
 }

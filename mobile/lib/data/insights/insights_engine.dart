@@ -46,6 +46,7 @@ class InsightsSnapshot {
     required this.behindNation,
     required this.otherGenderAhead,
     required this.groupSize,
+    required this.starters,
     required this.cpPlace,
     required this.sectionSets,
     required this.stats,
@@ -71,6 +72,9 @@ class InsightsSnapshot {
 
   /// Finisher count per group key ("overall", "gender:F", "category:3", "nation:MAS").
   final Map<String, int> groupSize;
+
+  /// Runners who have crossed the start line, per group key (same keys).
+  final Map<String, int> starters;
 
   /// `cpPlace[cp][runner]`: clock-order place when crossing that checkpoint (0 = none).
   final List<Int32List> cpPlace;
@@ -104,7 +108,13 @@ class InsightsSnapshot {
       return ResultRow(participantId: participantId, status: status, startDelayS: i >= 0 && !startDelay[i].isNaN ? startDelay[i] : null);
     }
     final p = table.runners[i];
-    PlaceInfo info(Int32List place, Int32List behind, String key) => PlaceInfo(place: place[i], of: groupSize[key] ?? 0, behind: behind[i]);
+    PlaceInfo info(Int32List place, Int32List behind, String key) {
+      final fin = groupSize[key] ?? 0;
+      if (closed) return PlaceInfo(place: place[i], of: fin, behind: behind[i]);
+      final of = math.max(fin, starters[key] ?? fin);
+      return PlaceInfo(place: place[i], of: of, behind: behind[i] + of - fin, finished: fin, provisional: true);
+    }
+
     return ResultRow(
       participantId: participantId,
       status: status,
@@ -300,15 +310,32 @@ class InsightsEngine {
     byCat.forEach((c, l) => rankGroup('category:$c', l, placeC, behindC));
     byNation.forEach((c, l) => rankGroup('nation:$c', l, placeN, behindN));
 
+    // ---- starters per group (denominator while the race is live) ----
+    final starters = <String, int>{};
+    void bump(String k) => starters[k] = (starters[k] ?? 0) + 1;
+    for (var i = 0; i < n; i++) {
+      if (at(0, i).isNaN) continue;
+      final p = table.runners[i];
+      bump('overall');
+      bump('gender:${p.gender.code}');
+      bump('category:${p.categoryId}');
+      bump('nation:${p.nation}');
+    }
+
     // ---- other-gender compare: share of the other gender with a slower time ----
+    // While live, runners of the other gender still on course count as behind.
+
     final other = Float64List(n)..fillRange(0, n, double.nan);
     for (final g in Gender.values) {
       final otherList = byGender[g == Gender.m ? Gender.f : Gender.m] ?? const <int>[];
       final otherTimes = [for (final i in otherList) key(i)];
+      final otherCode = g == Gender.m ? 'F' : 'M';
+      final onCourse = closed ? 0 : math.max(0, (starters['gender:$otherCode'] ?? 0) - otherTimes.length);
+      final denom = otherTimes.length + onCourse;
       for (final i in byGender[g] ?? const <int>[]) {
-        if (otherTimes.isEmpty) continue;
-        final slower = otherTimes.length - _upperBound(otherTimes, key(i));
-        other[i] = slower / otherTimes.length * 100;
+        if (denom == 0) continue;
+        final slower = otherTimes.length - _upperBound(otherTimes, key(i)) + onCourse;
+        other[i] = slower / denom * 100;
       }
     }
 
@@ -416,6 +443,7 @@ class InsightsEngine {
       behindNation: behindN,
       otherGenderAhead: other,
       groupSize: groupSize,
+      starters: starters,
       cpPlace: cpPlace,
       sectionSets: sectionSets,
       stats: stats,

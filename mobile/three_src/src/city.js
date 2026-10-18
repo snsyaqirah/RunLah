@@ -195,6 +195,52 @@ export function buildCity(scene, data, route, landmarks, trees) {
     [1300, -600, 700, 0.5],
   ];
   const blocks = [];
+  // Occupancy grid (25 m cells) so blocks never overlap.
+  const occ = new Set();
+  const cellsOf = (x, z, r) => {
+    const out = [];
+    for (let i = Math.floor((x - r) / 25); i <= Math.floor((x + r) / 25); i++) {
+      for (let j = Math.floor((z - r) / 25); j <= Math.floor((z + r) / 25); j++) out.push(`${i},${j}`);
+    }
+    return out;
+  };
+  const free = (x, z, r) => cellsOf(x, z, r).every((k) => !occ.has(k));
+  // Dataran Merdeka's field sits beside the finish straight (see finish.js).
+  const fin = {};
+  route.at(route.distance, fin);
+  const ax = route.endDir.x;
+  const az = route.endDir.z;
+  const padang = { x: fin.x - ax * 70 - az * 96, z: fin.z - az * 70 + ax * 96 };
+  const blockedByLandmark = (x, z, half) =>
+    lms.some((l) => Math.hypot(x - l.x, z - l.z) < l.r + half) || Math.hypot(x - padang.x, z - padang.z) < 135 + half;
+  const place = (x, z, w, d, h, yaw) => {
+    const r = Math.min(w, d) / 2;
+    for (const k of cellsOf(x, z, r)) occ.add(k);
+    blocks.push([x, z, w, d, h, yaw]);
+  };
+
+  // 1) Street frontage: low-rise blocks lining both sides of the course,
+  //    turned to face the road.
+  const tmp = {};
+  for (let dd = 0; dd < route.distance; dd += 38) {
+    route.at(dd, tmp);
+    for (const side of [-1, 1]) {
+      if (rand() < 0.3) continue;
+      const w = 22 + rand() * 22;
+      const d = 16 + rand() * 18;
+      const off = 26 + d / 2 + rand() * 14;
+      const x = tmp.x - tmp.tz * side * off;
+      const z = tmp.z + tmp.tx * side * off;
+      const half = Math.hypot(w, d) / 2;
+      if (hash.clearance(x, z) < off - 4 || blockedByLandmark(x, z, half) || !free(x, z, Math.min(w, d) / 2)) continue;
+      let dense = 0;
+      for (const [cx, cz, r, wt] of cbd) dense = Math.max(dense, wt * Math.exp(-((x - cx) ** 2 + (z - cz) ** 2) / (r * r)));
+      const h = Math.min(10 + rand() * 26 + dense * 30, 12 + (off - d / 2) * 0.9);
+      place(x, z, w, d, h, Math.atan2(-tmp.tz, tmp.tx));
+    }
+  }
+
+  // 2) The wider city on a jittered grid, denser and taller in the CBD.
   const pad = 1300;
   const step = 72;
   for (let x = b.minX - pad; x <= b.maxX + pad; x += step) {
@@ -204,29 +250,19 @@ export function buildCity(scene, data, route, landmarks, trees) {
       let dense = 0;
       for (const [cx, cz, r, w] of cbd) dense = Math.max(dense, w * Math.exp(-((px - cx) ** 2 + (pz - cz) ** 2) / (r * r)));
       const fromCentre = Math.hypot(px - b.cx, pz - b.cz) / 4500;
-      // Every stretch of the course gets a neighbourhood around it.
       const nearRoad = hash.clearance(px, pz);
-      const along = nearRoad < 100 ? 0.3 : 0;
-      const keep = 0.2 + dense * 0.5 + along - Math.max(0, fromCentre - 0.55) * 0.45;
+      const keep = 0.2 + dense * 0.5 + (nearRoad < 300 ? 0.12 : 0) - Math.max(0, fromCentre - 0.55) * 0.45;
       if (rand() > keep) continue;
       const w = 16 + rand() * 30 + dense * 18;
       const d = 16 + rand() * 30 + dense * 18;
       const half = Math.hypot(w, d) / 2;
-      const clear = nearRoad < 100 ? nearRoad : hash.clearance(px, pz);
-      if (clear < half + 16) continue;
-      let blocked = false;
-      for (const l of lms) {
-        if (Math.hypot(px - l.x, pz - l.z) < l.r + half) {
-          blocked = true;
-          break;
-        }
-      }
-      if (blocked) continue;
+      if (nearRoad < half + 16) continue;
+      if (blockedByLandmark(px, pz, half) || !free(px, pz, Math.min(w, d) / 2)) continue;
       const tall = rand() < 0.06 + dense * 0.3;
       let h = tall ? 60 + rand() * (90 + dense * 170) : 8 + rand() * rand() * 40 + dense * 20;
       // Keep the street canyon open so the course stays visible from above.
-      h = Math.min(h, 12 + Math.max(0, clear - half) * 0.9);
-      blocks.push([px, pz, w, d, h, 0.38 + (rand() - 0.5) * 0.25]);
+      h = Math.min(h, 12 + Math.max(0, nearRoad - half) * 0.9);
+      place(px, pz, w, d, h, 0.38 + (rand() - 0.5) * 0.25);
     }
   }
 

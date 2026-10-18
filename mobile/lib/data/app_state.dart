@@ -178,6 +178,8 @@ class InsightsController extends ChangeNotifier {
   }
 
   void _recompute() {
+    _pending?.cancel();
+    _pending = null;
     _snapshot = sim.insights(basis: _basis);
     _lastRun = DateTime.now();
     _lastRaceTime = sim.raceTime;
