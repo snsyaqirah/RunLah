@@ -35,6 +35,10 @@ android {
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            // R8 shrinking needs several GB of RAM next to the Dart compiler; off
+            // for demo builds on a 10 GB laptop. Turn back on for store builds.
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
 }
