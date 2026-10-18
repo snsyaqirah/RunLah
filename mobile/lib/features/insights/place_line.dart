@@ -79,7 +79,7 @@ class PlaceLine extends StatelessWidget {
           children: [
             Expanded(
               child: Text(
-                tr('{n} finishers behind', {'n': fmtInt(info.behind)}),
+                tr(info.provisional ? '{n} runners behind' : '{n} finishers behind', {'n': fmtInt(info.behind)}),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: ink(context)),

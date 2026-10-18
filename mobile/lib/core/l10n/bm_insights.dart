@@ -118,6 +118,7 @@ const Map<String, String> bmInsights = {
   'Top {pct}': '{pct} teratas',
   'of {n}': 'daripada {n}',
   '{n} finishers behind': '{n} penamat di belakang',
+  '{n} runners behind': '{n} pelari di belakang',
   'Jump to you': 'Pergi ke kedudukan anda',
   'Search name or bib': 'Cari nama atau bib',
   'Clear': 'Kosongkan',

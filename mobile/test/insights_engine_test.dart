@@ -33,7 +33,7 @@ void main() {
 
   test('places, ties, behind and Top % match brute force', () {
     final table = randomTable(400, 1);
-    final s = InsightsEngine.compute(table, race, asOf: 1e9);
+    final s = InsightsEngine.compute(table, race, asOf: 1e9, closed: true);
     for (final p in table.runners) {
       final i = table.indexOf[p.id]!;
       final r = s.result(p.id);
@@ -57,7 +57,7 @@ void main() {
 
   test('overtakes match brute force on every section', () {
     final table = randomTable(300, 7);
-    final s = InsightsEngine.compute(table, race, asOf: 1e9);
+    final s = InsightsEngine.compute(table, race, asOf: 1e9, closed: true);
     for (final p in table.runners.take(120)) {
       final i = table.indexOf[p.id]!;
       for (final sec in s.sections(p.id)) {
@@ -76,7 +76,7 @@ void main() {
 
   test('other-gender compare and ghosts', () {
     final table = randomTable(200, 3);
-    final s = InsightsEngine.compute(table, race, asOf: 1e9);
+    final s = InsightsEngine.compute(table, race, asOf: 1e9, closed: true);
     final me = s.ranking().elementAt(50);
     final r = s.result(me);
     final myG = s.participant(me).gender;

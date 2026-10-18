@@ -21,8 +21,10 @@ flutter pub get
 
 flutter run -d chrome          # quickest: runs in the browser
 flutter run                    # Android phone plugged in (USB debugging on)
-flutter build apk --release    # APK to send to an Android phone: build/app/outputs/flutter-apk/app-release.apk
+flutter build apk --release --target-platform android-arm64   # APK for Android phones → build/app/outputs/flutter-apk/app-release.apk
 ```
+
+Gradle is capped at ~2.5 GB in `android/gradle.properties` so builds fit on a 10 GB laptop. Raise it if you have more RAM.
 
 **iPhone** needs a Mac with Xcode: `cd ios && pod install && cd .. && flutter run` (set your Apple team under Runner → Signing & Capabilities the first time).
 Everything iOS needs is already configured: location "Always" + background location, camera, photos, notifications, iOS 15.5 (required by ML Kit).
@@ -118,5 +120,5 @@ flutter test --concurrency=1      # one file at a time keeps memory low (~0.5 GB
   - QR scanning.
   - The background-GPS foreground service.
   - The iOS build (needs a Mac).
-- Map tiles come from CARTO / OpenStreetMap: free for a demo, but production needs a tile plan or self-hosted tiles.
+- Map tiles come from the public OpenStreetMap server (`lib/core/widgets/map_tiles.dart`): fine for a demo, but production needs a paid tile plan or self-hosted tiles.
 - Demo history races, staff and upcoming events are fictional.
